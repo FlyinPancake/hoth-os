@@ -13,3 +13,9 @@ RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tail
 
 # Clean up dnf cache to reduce image size
 RUN dnf clean all
+
+
+LABEL org.opencontainers.image.source="https://github.com/flyinpancake/hoth-os"
+LABEL org.opencontainers.image.description="A minimal OS for Raspberry Pi based on AlmaLinux"
+LABEL org.opencontainers.image.licenses="MIT"
+LABEL org.opencontainers.image.title="hoth-os"
