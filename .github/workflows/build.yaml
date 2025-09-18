@@ -49,9 +49,7 @@ jobs:
       - name: Set up Podman
         run: |
           sudo apt update
-          sudo apt install -y podman
-      - name: fish-actions/install-fish
-        uses: fish-actions/install-fish@v1.2.0
+          sudo apt install -y podman fish
       - name: Build and Push Image
         shell: fish
         run: |
