@@ -4,7 +4,7 @@ FROM quay.io/almalinuxorg/almalinux-bootc-rpi:10
 RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && dnf install -y epel-release
 
 # Install packages
-RUN dnf install -y vim fish
+RUN dnf install -y vim fish cockpit cockpit-ostree cockpit-files
 
 # Install tailscale
 RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo && \
