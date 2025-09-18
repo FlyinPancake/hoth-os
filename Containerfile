@@ -7,11 +7,9 @@ RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && d
 RUN dnf install -y vim fish
 
 # Install tailscale
-RUN <<EORUN
-dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo
-dnf install -y tailscale
-systemctl enable tailscaled
-EORUN
+RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo && \
+    dnf install -y tailscale && \
+    systemctl enable tailscaled
 
 # Clean up dnf cache to reduce image size
 RUN dnf clean all
