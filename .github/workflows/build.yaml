@@ -6,7 +6,7 @@ on:
     branches:
       - main
   workflow_dispatch:
-
+name: Build and Push hoth-os Container Image
 env:
   ALMALINUX_VERSION: 10
   IMAGE_NAME: ghcr.io/flyinpancake/hoth-os
@@ -49,9 +49,8 @@ jobs:
       - name: Set up Podman
         run: |
           sudo apt update
-          sudo apt install -y podman fish
+          sudo apt install -y podman
       - name: Build and Push Image
-        shell: fish
         run: |
           podman build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${{ needs.gather_metadata.outputs.tag_alma_version }} -t $IMAGE_NAME:${{ needs.gather_metadata.outputs.tag_alma_date }} -t $IMAGE_NAME:${{ needs.gather_metadata.outputs.tag_sha }} .
           podman push $IMAGE_NAME:latest
