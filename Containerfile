@@ -4,7 +4,8 @@ FROM quay.io/almalinuxorg/almalinux-bootc-rpi:10
 RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && dnf install -y epel-release
 
 # Install packages
-RUN dnf install -y vim fish cockpit cockpit-ostree cockpit-files
+RUN dnf install -y vim fish cockpit cockpit-ostree cockpit-files cockpit-podman && \
+    dnf install https://github.com/45Drives/cockpit-file-sharing/releases/download/v4.3.1/cockpit-file-sharing-4.3.1-2.el9.noarch.rpm
 
 # Install tailscale
 RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo && \
