@@ -11,6 +11,10 @@ env:
   ALMALINUX_VERSION: 10
   IMAGE_NAME: ghcr.io/flyinpancake/hoth-os
 
+permissions:
+  contents: read
+  packages: write
+
 jobs:
   gather_metadata:
     runs-on: ubuntu-24.04-arm
