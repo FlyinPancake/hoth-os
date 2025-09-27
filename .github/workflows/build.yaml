@@ -6,6 +6,8 @@ on:
     branches:
       - main
   workflow_dispatch:
+  schedule:
+    - cron: "0 4 * * *" # At 04:00 UTC every day
 name: Build and Push hoth-os Container Image
 env:
   ALMALINUX_VERSION: 10
@@ -34,7 +36,7 @@ jobs:
             type=raw,value=${{ env.ALMALINUX_VERSION }},enable=${{ github.ref == 'refs/heads/main' }}
             type=ref,event=pr
             type=sha
-            
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
