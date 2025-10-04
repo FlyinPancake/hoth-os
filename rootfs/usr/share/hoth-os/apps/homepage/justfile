@@ -7,7 +7,7 @@ install:
     gum style --border rounded --padding "1 2" --border-foreground 212 "Homepage Setup Wizard"
     echo
     
-    WEB_PORT=$(gum input --placeholder "3000" --prompt "Web UI port: " --value "3000")
+    WEB_PORT=$(gum input --placeholder "8090" --prompt "Web UI port: " --value "8090")
     echo "Web UI port: $WEB_PORT"
     
     HOSTNAME=$(hostname)
@@ -25,7 +25,7 @@ install:
     echo "Copying default configs..."
     sudo cp /usr/share/hoth-os/apps/homepage/config/*.yaml "$CONFIG_PATH/"
     
-    sudo sed -i "s/{{HOMEPAGE_VAR_HOST}}/$HOSTNAME/g" "$CONFIG_PATH/services.yaml"
+    sudo sed -i "s/__HOSTNAME__/$HOSTNAME/g" "$CONFIG_PATH/services.yaml"
     
     sudo chown -R $(id -u):$(id -g) "$CONFIG_PATH"
     
@@ -34,7 +34,7 @@ install:
     
     echo "Installing quadlet..."
     sed \
-        -e "s|PublishPort=3000:3000|PublishPort=$WEB_PORT:3000|" \
+        -e "s|PublishPort=8090:3000|PublishPort=$WEB_PORT:3000|" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/homepage.container \

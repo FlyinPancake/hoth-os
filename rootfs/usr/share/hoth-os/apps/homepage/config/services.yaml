@@ -2,17 +2,17 @@
 - System:
     - Cockpit:
         icon: cockpit.png
-        href: http://{{HOMEPAGE_VAR_HOST}}:9090
+        href: http://__HOSTNAME__:9090
         description: System management
         widget:
           type: cockpit
-          url: http://{{HOMEPAGE_VAR_HOST}}:9090
+          url: http://__HOSTNAME__:9090
 
 - Services:
     - Syncthing:
         icon: syncthing.png
-        href: http://{{HOMEPAGE_VAR_HOST}}:8384
+        href: http://__HOSTNAME__:8384
         description: File synchronization
         widget:
           type: syncthing
-          url: http://{{HOMEPAGE_VAR_HOST}}:8384
+          url: http://__HOSTNAME__:8384
