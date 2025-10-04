@@ -15,12 +15,21 @@ starship action="":
     #!/usr/bin/env bash
     set -Eeuo pipefail
     
-    PARENT_COMM=$(ps -p $PPID -o comm=)
-    if [[ "$PARENT_COMM" == *"fish"* ]]; then
-        CURRENT_SHELL="fish"
-    else
-        CURRENT_SHELL="bash"
-    fi
+    # Walk up the process tree to find the actual shell
+    PID=$$
+    CURRENT_SHELL="bash"
+    while [ $PID -gt 1 ]; do
+        PARENT_PID=$(ps -o ppid= -p $PID | tr -d ' ')
+        PARENT_COMM=$(ps -o comm= -p $PARENT_PID 2>/dev/null | tr -d ' ')
+        if [[ "$PARENT_COMM" == "fish" ]]; then
+            CURRENT_SHELL="fish"
+            break
+        elif [[ "$PARENT_COMM" == "bash" ]]; then
+            CURRENT_SHELL="bash"
+            break
+        fi
+        PID=$PARENT_PID
+    done
     
     if [ -z "{{ action }}" ]; then
         ACTION=$(gum choose "enable" "disable" --header "Enable or disable Starship prompt for $CURRENT_SHELL")
