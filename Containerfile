@@ -18,7 +18,7 @@ RUN dnf -y install dnf-plugins-core && \
     dnf clean all && rm -rf /var/cache/dnf && \
     systemctl enable tailscaled && \
     curl -sS https://starship.rs/install.sh | sh -s -- -y && \
-    mkdir -p /srv/{data,config,.snapshots}
+    mkdir -p /srv/data /srv/config /srv/.snapshots 
 
 COPY rootfs/ /
 
