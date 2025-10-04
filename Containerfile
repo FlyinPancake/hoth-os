@@ -2,6 +2,8 @@ ARG CODE_SERVER_VERSION=4.104.2
 
 FROM quay.io/almalinuxorg/almalinux-bootc-rpi:10
 
+ENV CODE_SERVER_VERSION=${CODE_SERVER_VERSION}
+
 # Make update dnf cache
 RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && dnf install -y epel-release
 
