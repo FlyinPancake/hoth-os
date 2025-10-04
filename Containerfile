@@ -5,8 +5,8 @@ RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && d
 
 # Install packages
 RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo && \
-    dnf install -y vim fish cockpit cockpit-ostree cockpit-files cockpit-podman neovim tailscale && \
-    https://github.com/45Drives/cockpit-file-sharing/releases/download/v4.3.1-2/cockpit-file-sharing-4.3.1-2.el9.noarch.rpm && \
+    dnf install -y vim fish cockpit cockpit-ostree cockpit-files cockpit-podman neovim tailscale ripgrep fd-find \
+    https://github.com/45Drives/cockpit-file-sharing/releases/download/v4.3.1-2/cockpit-file-sharing-4.3.1-2.el9.noarch.rpm \
     https://github.com/45Drives/cockpit-identities/releases/download/v0.1.12/cockpit-identities-0.1.12-1.el8.noarch.rpm && \
     systemctl enable tailscaled
 

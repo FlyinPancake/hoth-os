@@ -17,6 +17,10 @@ permissions:
   contents: read
   packages: write
 
+concurrency:
+  group: build-and-push-hoth-os
+  cancel-in-progress: true
+
 jobs:
   build_bootc:
     runs-on: ubuntu-24.04-arm
@@ -43,10 +47,6 @@ jobs:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Set up Podman
-        run: |
-          sudo apt update
-          sudo apt install -y podman
       - name: Build and Push Image
         if: steps.meta.outputs.tags != ''
         shell: bash
