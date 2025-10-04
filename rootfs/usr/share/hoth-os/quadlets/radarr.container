@@ -6,9 +6,9 @@ After=network-online.target
 Image=lscr.io/linuxserver/radarr:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
-Volume=/var/arr-stack/radarr:/config:Z
-Volume=/var/arr-stack/downloads:/downloads:Z
-Volume=/var/arr-stack/movies:/movies:Z
+Volume=/srv/config/radarr:/config:Z
+Volume=/srv/data/downloads:/downloads:Z
+Volume=/srv/data/movies:/movies:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC

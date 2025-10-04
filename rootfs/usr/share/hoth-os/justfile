@@ -11,10 +11,16 @@ syncthing *args:
 homepage *args:
     @just --justfile {{ apps_dir }}/homepage/justfile {{ args }}
 
+arr-stack *args:
+    @just --justfile {{ apps_dir }}/arr-stack/justfile {{ args }}
+
+btrfs-setup:
+    @bash /usr/share/hoth-os/apps/btrfs-setup.sh
+
 starship action="":
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     # Walk up the process tree to find the actual shell
     PID=$$
     CURRENT_SHELL="bash"
@@ -30,7 +36,7 @@ starship action="":
         fi
         PID=$PARENT_PID
     done
-    
+
     if [ -z "{{ action }}" ]; then
         ACTION=$(gum choose "enable" "disable" --header "Enable or disable Starship prompt for $CURRENT_SHELL")
     else
@@ -90,31 +96,30 @@ starship action="":
 update:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     gum style --border rounded --padding "1 2" --border-foreground 212 "System Update"
     echo
-    
+
     echo "Checking for updates..."
     UPDATE_OUTPUT=$(sudo bootc update --check 2>&1)
     echo "$UPDATE_OUTPUT"
     echo
-    
+
     if echo "$UPDATE_OUTPUT" | grep -q "No changes"; then
         gum style --foreground 212 "✓ System is up to date!"
         exit 0
     fi
-    
+
     gum confirm "Update system?" || exit 0
     echo
-    
+
     echo "Updating bootc system..."
     sudo bootc upgrade
     echo
-    
+
     gum style --foreground 212 "✓ Update complete!"
     echo
-    
+
     if gum confirm "Reboot now?"; then
         sudo systemctl reboot
     fi
-

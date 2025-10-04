@@ -7,8 +7,8 @@ install:
     gum style --border rounded --padding "1 2" --border-foreground 212 "Arr Stack Setup Wizard"
     echo
     
-    DATA_PATH=$(gum input --placeholder "/var/arr-stack" --prompt "Data path: " --value "/var/arr-stack")
-    echo "Data path: $DATA_PATH"
+    DATA_PATH=$(gum input --placeholder "/srv" --prompt "Base path: " --value "/srv")
+    echo "Base path: $DATA_PATH"
     
     SONARR_PORT=$(gum input --placeholder "8989" --prompt "Sonarr port: " --value "8989")
     echo "Sonarr port: $SONARR_PORT"
@@ -30,8 +30,9 @@ install:
     echo
     
     echo "Creating directories..."
-    sudo mkdir -p "$DATA_PATH"/{sonarr,radarr,prowlarr,qbittorrent,downloads,tv,movies}
-    sudo chown -R $(id -u):$(id -g) "$DATA_PATH"
+    sudo mkdir -p "$DATA_PATH/config"/{sonarr,radarr,prowlarr,qbittorrent}
+    sudo mkdir -p "$DATA_PATH/data"/{downloads,tv,movies}
+    sudo chown -R $(id -u):$(id -g) "$DATA_PATH/config" "$DATA_PATH/data"
     
     QUADLET_DIR="$HOME/.config/containers/systemd"
     mkdir -p "$QUADLET_DIR"
@@ -48,7 +49,8 @@ install:
     
     echo "Installing Sonarr quadlet..."
     sed \
-        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
+        -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/sonarr.container \
@@ -56,7 +58,8 @@ install:
     
     echo "Installing Radarr quadlet..."
     sed \
-        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
+        -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/radarr.container \
@@ -64,7 +67,8 @@ install:
     
     echo "Installing Prowlarr quadlet..."
     sed \
-        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
+        -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/prowlarr.container \
@@ -72,7 +76,8 @@ install:
     
     echo "Installing qBittorrent quadlet..."
     sed \
-        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
+        -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/qbittorrent.container \
@@ -176,5 +181,5 @@ configure-homepage sonarr_port radarr_port prowlarr_port qbit_port:
     export __QBIT_USER__="$QBIT_USER"
     export __QBIT_PASS__="$QBIT_PASS"
     
-    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/arr-stack/homepage_config
+    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/arr-stack/homepage_config.sh
 

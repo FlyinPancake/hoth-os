@@ -6,7 +6,7 @@ After=network-online.target
 Image=lscr.io/linuxserver/prowlarr:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
-Volume=/var/arr-stack/prowlarr:/config:Z
+Volume=/srv/config/prowlarr:/config:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC

@@ -1,40 +1,27 @@
 # Agent Guide for hoth-os
-Build/lint/test:
-- Build image: `just build` (alias for `podman build .`)
-- Tag local image: `podman build -t local/hoth-os:dev .`
-- Lint locally: `just lint` (runs `hadolint` + `actionlint`)
-- CI: `lint` job (actionlint + hadolint) gates `build_bootc` and push.
-- Tests: none configured; single-test not applicable yet.
 
-Project structure:
-- `rootfs/` - Files added to container image (copied to / in container)
-  - `rootfs/usr/share/hoth-os/` - hoth-os system files
-    - `apps/` - App directories (each app is self-contained)
-      - `<appname>/justfile` - App installer recipes
-      - `<appname>/config/` - Default config files (optional)
-    - `quadlets/` - Systemd quadlet templates
-    - `justfile` - Main hjust entrypoint
-  - `rootfs/etc/profile.d/hoth-os.sh` - Shell aliases (hjust) for bash
-  - `rootfs/etc/fish/conf.d/hoth-os.fish` - Shell aliases (hjust) for fish
-- Build-time only files (NOT in container):
-  - `Containerfile` - Image build definition
-  - `justfile` - Build/dev tasks
-  - `.github/` - CI workflows
-  - `AGENTS.md`, `README.md`, `PORTS.md` - Documentation
+Build/lint/test:
+- Build: `just build` (alias: `podman build .`); tag local: `podman build -t local/hoth-os:dev .`
+- Lint: `just lint` (hadolint + actionlint); CI gates build on lint pass
+- Tests: none configured
+
+Structure:
+- `rootfs/` → copied to `/` in image; `rootfs/usr/share/hoth-os/` has apps/, quadlets/, justfile
+- Apps: self-contained in `apps/<name>/` with justfile (install/uninstall/status/logs recipes) + optional config/
+- Build-time only: Containerfile, justfile, .github/, *.md docs
 
 Code style:
-- Containerfile: group steps; prefer one `RUN` with `&&` and `set -e`.
-- Packages: `dnf -y ... && dnf clean all && rm -rf /var/cache/dnf`.
-- Layers: order least→most frequently changed to maximize cache.
-- Shell in RUN: use `set -Eeuo pipefail`; quote variables.
-- YAML: 2-space indent; pin actions by version; descriptive step names.
-- justfile: kebab-case recipe names; idempotent; avoid interactive prompts (except in apps/).
-- App justfiles: use `gum` for wizards; no heredocs; echo settings after input; recipes: install/uninstall/status/logs.
-- App structure: each app in `apps/<name>/` with justfile and optional config/ directory.
-- Port defaults: check PORTS.md to avoid conflicts; use higher ports (8000+) to avoid dev conflicts.
-- Naming: UPPER_SNAKE for env vars; lowercase-dashed image tags.
-- Errors: fail fast; check exit codes; log commands (`set -x` for debug).
-- Formatting: lines ≤100 chars; trim trailing whitespace; use LF endings.
-Editor/automation:
-- Cursor/Copilot rules: none found; nothing to include.
+- **Shell scripts**: `set -Eeuo pipefail` at start; quote vars; no heredocs in app justfiles
+- **Containerfile**: group RUN steps with `&&`; pkgs: `dnf -y ... && dnf clean all && rm -rf /var/cache/dnf`; layer order: least→most changed
+- **justfile**: `set shell := ["bash", "-Eeuo", "pipefail", "-c"]`; kebab-case names; idempotent; gum for wizards (apps only)
+- **App justfiles**: echo settings after gum input; 4 recipes: install, uninstall, status, logs (logs take optional follow="")
+- **Homepage integration**: provide `homepage_config.sh` with `SERVICE_NAME` and `YAML_CONTENT` using `__VARIABLE__` placeholders
+- **Paths**: `/srv/config/<app>` (@config subvol, snapshotted) and `/srv/data/<app>` (@data subvol, no snapshots); document in PATHS.md
+- **Ports**: check PORTS.md; default 8000+; apps prompt during install
+- **YAML/CI**: 2-space indent; pin action versions; descriptive step names
+- **Naming**: UPPER_SNAKE env vars; lowercase-dashed tags
+- **Errors**: fail fast; check exit codes
+- **Formatting**: ≤100 chars/line; LF endings; trim trailing whitespace
+
+Editor rules: none (no .cursorrules or copilot-instructions.md)
 

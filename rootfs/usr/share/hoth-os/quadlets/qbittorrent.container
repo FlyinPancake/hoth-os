@@ -6,8 +6,8 @@ After=network-online.target
 Image=lscr.io/linuxserver/qbittorrent:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
-Volume=/var/arr-stack/qbittorrent:/config:Z
-Volume=/var/arr-stack/downloads:/downloads:Z
+Volume=/srv/config/qbittorrent:/config:Z
+Volume=/srv/data/downloads:/downloads:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC

@@ -7,8 +7,8 @@ install:
     gum style --border rounded --padding "1 2" --border-foreground 212 "Syncthing Setup Wizard"
     echo
     
-    DATA_PATH=$(gum input --placeholder "/var/syncthing" --prompt "Data path: " --value "/var/syncthing")
-    echo "Data path: $DATA_PATH"
+    DATA_PATH=$(gum input --placeholder "/srv" --prompt "Base path: " --value "/srv")
+    echo "Base path: $DATA_PATH"
     
     WEB_PORT=$(gum input --placeholder "8384" --prompt "Web UI port: " --value "8384")
     echo "Web UI port: $WEB_PORT"
@@ -21,8 +21,9 @@ install:
     echo
     
     echo "Creating directories..."
-    sudo mkdir -p "$DATA_PATH"
-    sudo chown $(id -u):$(id -g) "$DATA_PATH"
+    sudo mkdir -p "$DATA_PATH/config/syncthing"
+    sudo mkdir -p "$DATA_PATH/data/syncthing"
+    sudo chown -R $(id -u):$(id -g) "$DATA_PATH/config/syncthing" "$DATA_PATH/data/syncthing"
     
     QUADLET_DIR="$HOME/.config/containers/systemd"
     mkdir -p "$QUADLET_DIR"
@@ -30,7 +31,8 @@ install:
     echo "Installing quadlet..."
     sed \
         -e "s|PublishPort=8384:8384|PublishPort=$WEB_PORT:8384|" \
-        -e "s|Volume=/var/syncthing:/var/syncthing:Z|Volume=$DATA_PATH:/var/syncthing:Z|" \
+        -e "s|Volume=/srv/config/syncthing:/config:Z|Volume=$DATA_PATH/config/syncthing:/config:Z|" \
+        -e "s|Volume=/srv/data/syncthing:/data:Z|Volume=$DATA_PATH/data/syncthing:/data:Z|" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/syncthing.container \
@@ -87,6 +89,6 @@ configure-homepage port:
     
     export __PORT__="{{port}}"
     
-    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/syncthing/homepage_config
+    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/syncthing/homepage_config.sh
 
 

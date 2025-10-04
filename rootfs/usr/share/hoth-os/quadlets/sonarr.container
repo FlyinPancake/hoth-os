@@ -6,9 +6,9 @@ After=network-online.target
 Image=lscr.io/linuxserver/sonarr:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
-Volume=/var/arr-stack/sonarr:/config:Z
-Volume=/var/arr-stack/downloads:/downloads:Z
-Volume=/var/arr-stack/tv:/tv:Z
+Volume=/srv/config/sonarr:/config:Z
+Volume=/srv/data/downloads:/downloads:Z
+Volume=/srv/data/tv:/tv:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC
