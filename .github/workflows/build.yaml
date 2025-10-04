@@ -22,7 +22,19 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    name: Lint CI and Containerfile
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+      - name: Lint Containerfile with hadolint
+        uses: hadolint/hadolint-action@v3.1.0
+        with:
+          dockerfile: Containerfile
+
   build_bootc:
+    needs: [lint]
     runs-on: ubuntu-24.04-arm
     name: Build Bootc Image
     steps:
@@ -42,7 +54,7 @@ jobs:
             type=sha
 
       - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -59,6 +71,22 @@ jobs:
           for tag in "${TAGS[@]}"; do
             [[ -n "$tag" ]] && BUILD_ARGS+=( -t "$tag" )
           done
+
+          LABEL_ARGS=()
+          for label in "${LABELS[@]}"; do
+            [[ -n "$label" ]] && LABEL_ARGS+=( --label "$label" )
+          done
+
+          echo "Building image with tags:"
+          printf '  %s\n' "${TAGS[@]}"
+
+          podman build "${BUILD_ARGS[@]}" "${LABELS[@]}" .
+
+          echo "Pushing tags:"
+          for tag in "${TAGS[@]}"; do
+            podman push "$tag"
+          done
+
 
           LABEL_ARGS=()
           for label in "${LABELS[@]}"; do
