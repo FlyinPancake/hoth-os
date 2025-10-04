@@ -79,3 +79,40 @@ logs follow="":
     else
         journalctl --user -u homepage.service -n 50
     fi
+
+add-service config_file:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    CONFIG_PATH="/etc/homepage"
+    if [[ ! -d "$CONFIG_PATH" ]]; then
+        gum style --foreground 196 "Error: Homepage not installed. Run 'hjust homepage install' first."
+        exit 1
+    fi
+    
+    if [[ ! -f "{{config_file}}" ]]; then
+        gum style --foreground 196 "Error: Config file not found: {{config_file}}"
+        exit 1
+    fi
+    
+    source "{{config_file}}"
+    
+    HOSTNAME=$(hostname)
+    
+    YAML_CONTENT=$(echo "$YAML_CONTENT" | sed "s/__HOSTNAME__/$HOSTNAME/g")
+    
+    for var in $(env | grep '^__' | cut -d= -f1); do
+        value="${!var}"
+        YAML_CONTENT=$(echo "$YAML_CONTENT" | sed "s|$var|$value|g")
+    done
+    
+    if grep -q "$SERVICE_NAME:" "$CONFIG_PATH/services.yaml"; then
+        gum style --foreground 196 "$SERVICE_NAME already configured in services.yaml"
+        exit 1
+    fi
+    
+    echo "$YAML_CONTENT" | sudo tee -a "$CONFIG_PATH/services.yaml" > /dev/null
+    
+    systemctl --user restart homepage.service 2>/dev/null || true
+    
+    gum style --foreground 212 "✓ $SERVICE_NAME added to Homepage!"

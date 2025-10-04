@@ -46,6 +46,11 @@ install:
     gum style --foreground 212 "✓ Syncthing installed successfully!"
     gum style --faint "Web UI: http://localhost:$WEB_PORT | Data: $DATA_PATH"
     gum style --faint "Device name: $DEVICE_NAME (configure in web UI)"
+    echo
+    
+    if gum confirm "Add to Homepage?"; then
+        just /usr/share/hoth-os/apps/syncthing/justfile configure-homepage "$WEB_PORT"
+    fi
 
 uninstall:
     #!/usr/bin/env bash
@@ -69,3 +74,19 @@ logs follow="":
     else
         journalctl --user -u syncthing.service -n 50
     fi
+
+configure-homepage port:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Syncthing to Homepage"
+    echo
+    
+    gum confirm "Add Syncthing to Homepage?" || exit 0
+    echo
+    
+    export __PORT__="{{port}}"
+    
+    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/syncthing/homepage_config
+
+

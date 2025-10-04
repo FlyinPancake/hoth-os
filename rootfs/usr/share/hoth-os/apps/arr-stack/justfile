@@ -91,6 +91,11 @@ install:
     gum style --faint "Prowlarr: http://localhost:$PROWLARR_PORT"
     gum style --faint "qBittorrent: http://localhost:$QBIT_PORT"
     gum style --faint "Data: $DATA_PATH"
+    echo
+    
+    if gum confirm "Add to Homepage?"; then
+        just /usr/share/hoth-os/apps/arr-stack/justfile configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT"
+    fi
 
 uninstall:
     #!/usr/bin/env bash
@@ -134,3 +139,42 @@ logs service="" follow="":
             podman logs --tail 50 "$SERVICE"
         fi
     fi
+
+configure-homepage sonarr_port radarr_port prowlarr_port qbit_port:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Arr Stack to Homepage"
+    echo
+    
+    SONARR_API=$(gum input --password --placeholder "API Key" --prompt "Sonarr API Key: ")
+    echo "Sonarr API Key: ***"
+    
+    RADARR_API=$(gum input --password --placeholder "API Key" --prompt "Radarr API Key: ")
+    echo "Radarr API Key: ***"
+    
+    PROWLARR_API=$(gum input --password --placeholder "API Key" --prompt "Prowlarr API Key: ")
+    echo "Prowlarr API Key: ***"
+    
+    QBIT_USER=$(gum input --placeholder "admin" --prompt "qBittorrent username: " --value "admin")
+    echo "qBittorrent username: $QBIT_USER"
+    
+    QBIT_PASS=$(gum input --password --placeholder "Password" --prompt "qBittorrent password: ")
+    echo "qBittorrent password: ***"
+    echo
+    
+    gum confirm "Add Arr Stack to Homepage?" || exit 0
+    echo
+    
+    export __SONARR_PORT__="{{sonarr_port}}"
+    export __RADARR_PORT__="{{radarr_port}}"
+    export __PROWLARR_PORT__="{{prowlarr_port}}"
+    export __QBIT_PORT__="{{qbit_port}}"
+    export __SONARR_API__="$SONARR_API"
+    export __RADARR_API__="$RADARR_API"
+    export __PROWLARR_API__="$PROWLARR_API"
+    export __QBIT_USER__="$QBIT_USER"
+    export __QBIT_PASS__="$QBIT_PASS"
+    
+    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/arr-stack/homepage_config
+
