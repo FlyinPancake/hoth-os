@@ -3,35 +3,35 @@ set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 install:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     gum style --border rounded --padding "1 2" --border-foreground 212 "Homepage Setup Wizard"
     echo
-    
+
     WEB_PORT=$(gum input --placeholder "8090" --prompt "Web UI port: " --value "8090")
     echo "Web UI port: $WEB_PORT"
-    
+
     HOSTNAME=$(hostname)
     echo "Hostname: $HOSTNAME"
     echo
-    
+
     gum confirm "Install Homepage with these settings?" || exit 0
     echo
-    
+
     CONFIG_PATH="/etc/homepage"
-    
+
     echo "Creating config directory..."
     sudo mkdir -p "$CONFIG_PATH"
-    
+
     echo "Copying default configs..."
     sudo cp /usr/share/hoth-os/apps/homepage/config/*.yaml "$CONFIG_PATH/"
-    
+
     sudo sed -i "s/__HOSTNAME__/$HOSTNAME/g" "$CONFIG_PATH/services.yaml"
-    
+
     sudo chown -R $(id -u):$(id -g) "$CONFIG_PATH"
-    
+
     QUADLET_DIR="$HOME/.config/containers/systemd"
     mkdir -p "$QUADLET_DIR"
-    
+
     echo "Installing quadlet..."
     sed \
         -e "s|PublishPort=8090:3000|PublishPort=$WEB_PORT:3000|" \
@@ -39,14 +39,14 @@ install:
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/homepage.container \
         > "$QUADLET_DIR/homepage.container"
-    
+
     loginctl enable-linger $(whoami)
-    
+
     echo "Starting service..."
     systemctl --user daemon-reload
     systemctl --user start homepage.service
     echo
-    
+
     gum style --foreground 212 "✓ Homepage installed successfully!"
     gum style --faint "Web UI: http://localhost:$WEB_PORT"
     gum style --faint "Config: $CONFIG_PATH"
@@ -55,13 +55,13 @@ install:
 uninstall:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     gum confirm --default=false "Uninstall Homepage? (config will be preserved)" || exit 0
-    
+
     systemctl --user stop homepage.service 2>/dev/null || true
     rm -f "$HOME/.config/containers/systemd/homepage.container"
     systemctl --user daemon-reload
-    
+
     gum style --foreground 212 "✓ Homepage uninstalled"
 
 status:
@@ -69,7 +69,7 @@ status:
 
 logs follow="":
     #!/usr/bin/env bash
-    if [[ "{{follow}}" == "follow" || "{{follow}}" == "f" ]]; then
+    if [[ "{{ follow }}" == "follow" || "{{ follow }}" == "f" ]]; then
         journalctl --user -u homepage.service -f
     else
         journalctl --user -u homepage.service -n 50

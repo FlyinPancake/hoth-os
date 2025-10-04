@@ -10,6 +10,7 @@ PublishPort=8090:3000
 Volume=/etc/homepage:/app/config:Z
 Environment=PUID=1000
 Environment=PGID=1000
+Environment=HOMEPAGE_ALLOWED_HOSTS=*
 
 [Service]
 Restart=always
