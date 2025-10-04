@@ -5,24 +5,43 @@ install:
     set -Eeuo pipefail
     
     gum style --border rounded --padding "1 2" --border-foreground 212 "Syncthing Setup Wizard"
+    echo
     
     DATA_PATH=$(gum input --placeholder "/var/syncthing" --prompt "Data path: " --value "/var/syncthing")
+    echo "Data path: $DATA_PATH"
+    
     WEB_PORT=$(gum input --placeholder "8384" --prompt "Web UI port: " --value "8384")
+    echo "Web UI port: $WEB_PORT"
+    
     DEVICE_NAME=$(gum input --placeholder "hoth-pi" --prompt "Device name: " --value "hoth-pi")
+    echo "Device name: $DEVICE_NAME"
+    echo
     
     gum confirm "Install Syncthing with these settings?" || exit 0
+    echo
     
-    gum spin --spinner dot --title "Creating directories..." -- mkdir -p "$DATA_PATH"
+    echo "Creating directories..."
+    sudo mkdir -p "$DATA_PATH"
+    sudo chown $(id -u):$(id -g) "$DATA_PATH"
     
-    mkdir -p "$HOME/.config/containers/systemd"
+    QUADLET_DIR="$HOME/.config/containers/systemd"
+    mkdir -p "$QUADLET_DIR"
     
-    gum spin --spinner dot --title "Installing quadlet..." -- sed \
+    echo "Installing quadlet..."
+    sed \
         -e "s|PublishPort=8384:8384|PublishPort=$WEB_PORT:8384|" \
         -e "s|Volume=/var/syncthing:/var/syncthing:Z|Volume=$DATA_PATH:/var/syncthing:Z|" \
+        -e "s|PUID=1000|PUID=$(id -u)|" \
+        -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/syncthing.container \
-        > "$HOME/.config/containers/systemd/syncthing.container"
+        > "$QUADLET_DIR/syncthing.container"
     
-    gum spin --spinner dot --title "Starting service..." -- bash -c "systemctl --user daemon-reload && systemctl --user enable --now syncthing.service"
+    loginctl enable-linger $(whoami)
+    
+    echo "Starting service..."
+    systemctl --user daemon-reload
+    systemctl --user start syncthing.service
+    echo
     
     gum style --foreground 212 "✓ Syncthing installed successfully!"
     gum style --faint "Web UI: http://localhost:$WEB_PORT | Data: $DATA_PATH"
