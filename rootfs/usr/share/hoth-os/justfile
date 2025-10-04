@@ -11,6 +11,72 @@ syncthing *args:
 homepage *args:
     @just --justfile {{ apps_dir }}/homepage/justfile {{ args }}
 
+starship action="":
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    if type status &>/dev/null; then
+        CURRENT_SHELL="fish"
+    else
+        CURRENT_SHELL="bash"
+    fi
+    
+    if [ -z "{{action}}" ]; then
+        ACTION=$(gum choose "enable" "disable")
+    else
+        ACTION="{{action}}"
+    fi
+    
+    case $ACTION in
+        enable)
+            case $CURRENT_SHELL in
+                bash)
+                    if ! grep -q "starship init bash" ~/.bashrc 2>/dev/null; then
+                        echo 'eval "$(starship init bash)"' >> ~/.bashrc
+                        gum style --foreground 212 "✓ Starship enabled for bash"
+                        gum style --faint "Restart your shell or run: source ~/.bashrc"
+                    else
+                        gum style --faint "Starship already enabled in ~/.bashrc"
+                    fi
+                    ;;
+                fish)
+                    mkdir -p ~/.config/fish
+                    if ! grep -q "starship init fish" ~/.config/fish/config.fish 2>/dev/null; then
+                        echo 'starship init fish | source' >> ~/.config/fish/config.fish
+                        gum style --foreground 212 "✓ Starship enabled for fish"
+                        gum style --faint "Restart your shell"
+                    else
+                        gum style --faint "Starship already enabled in ~/.config/fish/config.fish"
+                    fi
+                    ;;
+                *)
+                    gum style --foreground 196 "✗ Unsupported shell: $CURRENT_SHELL"
+                    exit 1
+                    ;;
+            esac
+            ;;
+        disable)
+            case $CURRENT_SHELL in
+                bash)
+                    if [ -f ~/.bashrc ]; then
+                        sed -i '/starship init bash/d' ~/.bashrc
+                        gum style --foreground 212 "✓ Starship disabled for bash"
+                    fi
+                    ;;
+                fish)
+                    if [ -f ~/.config/fish/config.fish ]; then
+                        sed -i '/starship init fish/d' ~/.config/fish/config.fish
+                        gum style --foreground 212 "✓ Starship disabled for fish"
+                    fi
+                    ;;
+                *)
+                    gum style --foreground 196 "✗ Unsupported shell: $CURRENT_SHELL"
+                    exit 1
+                    ;;
+            esac
+            ;;
+    esac
+
 update:
     #!/usr/bin/env bash
     set -Eeuo pipefail

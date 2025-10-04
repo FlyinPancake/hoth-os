@@ -16,7 +16,8 @@ RUN dnf -y install dnf-plugins-core && \
     https://github.com/coder/code-server/releases/download/v4.104.2/code-server-4.104.2-arm64.rpm && \
     dnf -y update && \
     dnf clean all && rm -rf /var/cache/dnf && \
-    systemctl enable tailscaled
+    systemctl enable tailscaled && \
+    curl -sS https://starship.rs/install.sh | sh -s -- -y
 
 COPY rootfs/ /
 
