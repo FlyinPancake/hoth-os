@@ -6,8 +6,11 @@
         description: System management
     - Tailscale:
         icon: tailscale.png
-        href: http://__HOSTNAME__:41641
         description: Private network
+        widget:
+          type: tailscale
+          deviceid: __TAILSCALE_DEVICEID__
+          key: < Your Tailscale API Access Token from https://login.tailscale.com/admin/settings/keys >
 
 - Services:
     - Syncthing:
