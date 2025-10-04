@@ -4,9 +4,10 @@
         icon: cockpit.png
         href: http://__HOSTNAME__:9090
         description: System management
-        widget:
-          type: cockpit
-          url: http://__HOSTNAME__:9090
+    - Tailscale:
+        icon: tailscale.png
+        href: http://__HOSTNAME__:41641
+        description: Private network
 
 - Services:
     - Syncthing:
@@ -14,5 +15,5 @@
         href: http://__HOSTNAME__:8384
         description: File synchronization
         widget:
-          type: syncthing
+          type: strelaysrv
           url: http://__HOSTNAME__:8384
