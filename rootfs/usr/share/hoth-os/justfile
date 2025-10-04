@@ -1,0 +1,9 @@
+set shell := ["bash", "-Eeuo", "pipefail", "-c"]
+
+apps_dir := "/usr/share/hoth-os/apps"
+
+default:
+    @just --list --justfile {{justfile()}}
+
+syncthing *args:
+    @just --justfile {{apps_dir}}/syncthing.justfile {{args}}
