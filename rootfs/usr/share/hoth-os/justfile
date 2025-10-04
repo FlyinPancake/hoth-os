@@ -17,6 +17,58 @@ arr-stack *args:
 btrfs-setup:
     @bash /usr/share/hoth-os/apps/btrfs-setup.sh
 
+btrfs-snapshot action="" schedule="":
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    if [ -z "{{ action }}" ]; then
+        ACTION=$(gum choose "enable" "disable" "run-now" "status" --header "Manage btrfs snapshots")
+    else
+        ACTION="{{ action }}"
+    fi
+    
+    case $ACTION in
+        enable)
+            if [ -z "{{ schedule }}" ]; then
+                SCHEDULE=$(gum choose "daily" "hourly" "weekly" --header "Snapshot schedule:" --selected "daily")
+            else
+                SCHEDULE="{{ schedule }}"
+            fi
+            echo "Schedule: $SCHEDULE"
+            
+            sudo cp /usr/lib/systemd/system/btrfs-snapshot.timer /etc/systemd/system/btrfs-snapshot.timer
+            sudo sed -i "s/OnCalendar=daily/OnCalendar=$SCHEDULE/" /etc/systemd/system/btrfs-snapshot.timer
+            
+            sudo systemctl daemon-reload
+            sudo systemctl enable btrfs-snapshot.timer
+            sudo systemctl start btrfs-snapshot.timer
+            
+            gum style --foreground 212 "✓ Btrfs snapshots enabled ($SCHEDULE)"
+            gum style --faint "View status: hjust btrfs-snapshot status"
+            ;;
+        disable)
+            sudo systemctl stop btrfs-snapshot.timer 2>/dev/null || true
+            sudo systemctl disable btrfs-snapshot.timer 2>/dev/null || true
+            gum style --foreground 212 "✓ Btrfs snapshots disabled"
+            ;;
+        run-now)
+            gum style --foreground 212 "Running snapshot now..."
+            sudo systemctl start btrfs-snapshot.service
+            gum style --foreground 212 "✓ Snapshot created"
+            ;;
+        status)
+            echo "Timer status:"
+            sudo systemctl status btrfs-snapshot.timer --no-pager || true
+            echo
+            echo "Available snapshots:"
+            if [ -d /srv/.snapshots ]; then
+                ls -lh /srv/.snapshots/ | grep "^d" || echo "No snapshots found"
+            else
+                echo "/srv/.snapshots not found"
+            fi
+            ;;
+    esac
+
 starship action="":
     #!/usr/bin/env bash
     set -Eeuo pipefail

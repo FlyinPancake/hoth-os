@@ -1,0 +1,8 @@
+[Unit]
+Description=Btrfs snapshot of /srv/config
+After=local-fs.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/share/hoth-os/apps/btrfs-snapshot.sh
+User=root

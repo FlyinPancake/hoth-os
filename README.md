@@ -16,6 +16,17 @@ Use Podman Quadlets to run images on your PI.
 
 hoth-os includes a just-based app management system accessible via the `hjust` command (available in bash/fish).
 
+#### Initial Setup
+
+If you have an external drive, set it up with Btrfs and create the necessary subvolumes:
+
+```bash
+hjust btrfs-setup           # Interactive wizard for drive setup
+hjust btrfs-snapshot enable # Enable automatic config snapshots
+```
+
+See [BTRFS.md](BTRFS.md) for details.
+
 #### Available Apps
 
 - **syncthing** - File synchronization
@@ -25,10 +36,17 @@ hoth-os includes a just-based app management system accessible via the `hjust` c
 #### Commands
 
 ```bash
+# App management
 hjust <app> install      # Interactive wizard to install an app
 hjust <app> uninstall    # Remove app (preserves data)
 hjust <app> status       # Check app status
 hjust <app> logs [follow] # View app logs
+
+# System management
+hjust btrfs-setup        # Set up btrfs storage
+hjust btrfs-snapshot     # Manage automatic snapshots
+hjust starship           # Enable/disable Starship prompt
+hjust update             # Update system
 ```
 
 #### Homepage Integration
