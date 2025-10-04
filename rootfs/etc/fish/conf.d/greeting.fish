@@ -5,7 +5,7 @@ function fish_greeting
     echo "             /|   |\\"
     echo "            (_|   |_)"
     set_color cyan
-    echo "           ~~~~~~~~~~~~~"
+    echo "          ~~~~~~~~~~~~~"
     set_color normal
     echo ""
     echo "    Type 'hjust' to see available commands"

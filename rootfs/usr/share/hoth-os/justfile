@@ -15,18 +15,19 @@ starship action="":
     #!/usr/bin/env bash
     set -Eeuo pipefail
     
-    if type status &>/dev/null; then
+    PARENT_COMM=$(ps -p $PPID -o comm=)
+    if [[ "$PARENT_COMM" == *"fish"* ]]; then
         CURRENT_SHELL="fish"
     else
         CURRENT_SHELL="bash"
     fi
     
-    if [ -z "{{action}}" ]; then
-        ACTION=$(gum choose "enable" "disable")
+    if [ -z "{{ action }}" ]; then
+        ACTION=$(gum choose "enable" "disable" --header "Enable or disable Starship prompt for $CURRENT_SHELL")
     else
-        ACTION="{{action}}"
+        ACTION="{{ action }}"
     fi
-    
+
     case $ACTION in
         enable)
             case $CURRENT_SHELL in
