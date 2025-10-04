@@ -81,20 +81,31 @@ starship action="":
 update:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-
+    
     gum style --border rounded --padding "1 2" --border-foreground 212 "System Update"
     echo
-
+    
+    echo "Checking for updates..."
+    UPDATE_OUTPUT=$(sudo bootc update --check 2>&1)
+    echo "$UPDATE_OUTPUT"
+    echo
+    
+    if echo "$UPDATE_OUTPUT" | grep -q "No changes"; then
+        gum style --foreground 212 "✓ System is up to date!"
+        exit 0
+    fi
+    
     gum confirm "Update system?" || exit 0
     echo
-
+    
     echo "Updating bootc system..."
     sudo bootc upgrade
     echo
-
+    
     gum style --foreground 212 "✓ Update complete!"
     echo
-
+    
     if gum confirm "Reboot now?"; then
         sudo systemctl reboot
     fi
+
