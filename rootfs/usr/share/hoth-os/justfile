@@ -3,10 +3,31 @@ set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 apps_dir := "/usr/share/hoth-os/apps"
 
 default:
-    @just --list --justfile {{justfile()}}
+    @just --list --justfile {{ justfile() }}
 
 syncthing *args:
-    @just --justfile {{apps_dir}}/syncthing/justfile {{args}}
+    @just --justfile {{ apps_dir }}/syncthing/justfile {{ args }}
 
 homepage *args:
-    @just --justfile {{apps_dir}}/homepage/justfile {{args}}
+    @just --justfile {{ apps_dir }}/homepage/justfile {{ args }}
+
+update:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    gum style --border rounded --padding "1 2" --border-foreground 212 "System Update"
+    echo
+
+    gum confirm "Update system?" || exit 0
+    echo
+
+    echo "Updating bootc system..."
+    sudo bootc upgrade
+    echo
+
+    gum style --foreground 212 "✓ Update complete!"
+    echo
+
+    if gum confirm "Reboot now?"; then
+        sudo systemctl reboot
+    fi
