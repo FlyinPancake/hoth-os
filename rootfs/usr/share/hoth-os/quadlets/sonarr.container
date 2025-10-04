@@ -1,0 +1,21 @@
+[Unit]
+Description=Sonarr - TV series manager
+After=network-online.target
+
+[Container]
+Image=lscr.io/linuxserver/sonarr:latest
+AutoUpdate=registry
+Pod=arr-stack.pod
+Volume=/var/arr-stack/sonarr:/config:Z
+Volume=/var/arr-stack/downloads:/downloads:Z
+Volume=/var/arr-stack/tv:/tv:Z
+Environment=PUID=1000
+Environment=PGID=1000
+Environment=TZ=Etc/UTC
+
+[Service]
+Restart=always
+TimeoutStartSec=900
+
+[Install]
+WantedBy=default.target

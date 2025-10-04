@@ -1,0 +1,18 @@
+[Unit]
+Description=Arr Stack Pod
+After=network-online.target
+
+[Pod]
+PodmanArgs=--infra-name=arr-stack-infra
+PublishPort=8989:8989
+PublishPort=7878:7878
+PublishPort=9696:9696
+PublishPort=8080:8080
+PublishPort=6881:6881
+PublishPort=6881:6881/udp
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

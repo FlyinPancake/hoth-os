@@ -1,0 +1,136 @@
+set shell := ["bash", "-Eeuo", "pipefail", "-c"]
+
+install:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Arr Stack Setup Wizard"
+    echo
+    
+    DATA_PATH=$(gum input --placeholder "/var/arr-stack" --prompt "Data path: " --value "/var/arr-stack")
+    echo "Data path: $DATA_PATH"
+    
+    SONARR_PORT=$(gum input --placeholder "8989" --prompt "Sonarr port: " --value "8989")
+    echo "Sonarr port: $SONARR_PORT"
+    
+    RADARR_PORT=$(gum input --placeholder "7878" --prompt "Radarr port: " --value "7878")
+    echo "Radarr port: $RADARR_PORT"
+    
+    PROWLARR_PORT=$(gum input --placeholder "9696" --prompt "Prowlarr port: " --value "9696")
+    echo "Prowlarr port: $PROWLARR_PORT"
+    
+    QBIT_PORT=$(gum input --placeholder "8080" --prompt "qBittorrent port: " --value "8080")
+    echo "qBittorrent port: $QBIT_PORT"
+    
+    TORRENT_PORT=$(gum input --placeholder "6881" --prompt "Torrent port: " --value "6881")
+    echo "Torrent port: $TORRENT_PORT"
+    echo
+    
+    gum confirm "Install Arr Stack with these settings?" || exit 0
+    echo
+    
+    echo "Creating directories..."
+    sudo mkdir -p "$DATA_PATH"/{sonarr,radarr,prowlarr,qbittorrent,downloads,tv,movies}
+    sudo chown -R $(id -u):$(id -g) "$DATA_PATH"
+    
+    QUADLET_DIR="$HOME/.config/containers/systemd"
+    mkdir -p "$QUADLET_DIR"
+    
+    echo "Installing pod quadlet..."
+    sed \
+        -e "s|PublishPort=8989:8989|PublishPort=$SONARR_PORT:8989|" \
+        -e "s|PublishPort=7878:7878|PublishPort=$RADARR_PORT:7878|" \
+        -e "s|PublishPort=9696:9696|PublishPort=$PROWLARR_PORT:9696|" \
+        -e "s|PublishPort=8080:8080|PublishPort=$QBIT_PORT:8080|" \
+        -e "s|PublishPort=6881:6881|PublishPort=$TORRENT_PORT:6881|g" \
+        /usr/share/hoth-os/quadlets/arr-stack.pod \
+        > "$QUADLET_DIR/arr-stack.pod"
+    
+    echo "Installing Sonarr quadlet..."
+    sed \
+        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|PUID=1000|PUID=$(id -u)|" \
+        -e "s|PGID=1000|PGID=$(id -g)|" \
+        /usr/share/hoth-os/quadlets/sonarr.container \
+        > "$QUADLET_DIR/sonarr.container"
+    
+    echo "Installing Radarr quadlet..."
+    sed \
+        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|PUID=1000|PUID=$(id -u)|" \
+        -e "s|PGID=1000|PGID=$(id -g)|" \
+        /usr/share/hoth-os/quadlets/radarr.container \
+        > "$QUADLET_DIR/radarr.container"
+    
+    echo "Installing Prowlarr quadlet..."
+    sed \
+        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|PUID=1000|PUID=$(id -u)|" \
+        -e "s|PGID=1000|PGID=$(id -g)|" \
+        /usr/share/hoth-os/quadlets/prowlarr.container \
+        > "$QUADLET_DIR/prowlarr.container"
+    
+    echo "Installing qBittorrent quadlet..."
+    sed \
+        -e "s|Volume=/var/arr-stack|Volume=$DATA_PATH|g" \
+        -e "s|PUID=1000|PUID=$(id -u)|" \
+        -e "s|PGID=1000|PGID=$(id -g)|" \
+        /usr/share/hoth-os/quadlets/qbittorrent.container \
+        > "$QUADLET_DIR/qbittorrent.container"
+    
+    loginctl enable-linger $(whoami)
+    
+    echo "Starting services..."
+    systemctl --user daemon-reload
+    systemctl --user start arr-stack-pod.service
+    echo
+    
+    gum style --foreground 212 "✓ Arr Stack installed successfully!"
+    gum style --faint "Sonarr: http://localhost:$SONARR_PORT"
+    gum style --faint "Radarr: http://localhost:$RADARR_PORT"
+    gum style --faint "Prowlarr: http://localhost:$PROWLARR_PORT"
+    gum style --faint "qBittorrent: http://localhost:$QBIT_PORT"
+    gum style --faint "Data: $DATA_PATH"
+
+uninstall:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    gum confirm --default=false "Uninstall Arr Stack? (data will be preserved)" || exit 0
+    
+    gum spin --spinner dot --title "Stopping services..." -- systemctl --user disable --now arr-stack-pod.service 2>/dev/null || true
+    rm -f "$HOME/.config/containers/systemd/arr-stack.pod"
+    rm -f "$HOME/.config/containers/systemd/sonarr.container"
+    rm -f "$HOME/.config/containers/systemd/radarr.container"
+    rm -f "$HOME/.config/containers/systemd/prowlarr.container"
+    rm -f "$HOME/.config/containers/systemd/qbittorrent.container"
+    systemctl --user daemon-reload
+    
+    gum style --foreground 212 "✓ Arr Stack uninstalled"
+
+status:
+    @systemctl --user status arr-stack-pod.service
+
+logs service="" follow="":
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+    
+    if [[ -z "{{service}}" ]]; then
+        if [[ "{{follow}}" == "follow" || "{{follow}}" == "f" ]]; then
+            journalctl --user -u arr-stack-pod.service -f
+        else
+            journalctl --user -u arr-stack-pod.service -n 50
+        fi
+    else
+        SERVICE="{{service}}"
+        if [[ "$SERVICE" != "sonarr" && "$SERVICE" != "radarr" && "$SERVICE" != "prowlarr" && "$SERVICE" != "qbittorrent" ]]; then
+            echo "Error: Invalid service. Choose: sonarr, radarr, prowlarr, qbittorrent, or omit for pod logs"
+            exit 1
+        fi
+        
+        if [[ "{{follow}}" == "follow" || "{{follow}}" == "f" ]]; then
+            podman logs -f "$SERVICE"
+        else
+            podman logs --tail 50 "$SERVICE"
+        fi
+    fi
