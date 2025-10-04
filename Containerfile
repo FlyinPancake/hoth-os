@@ -1,3 +1,5 @@
+ARG CODE_SERVER_VERSION=4.104.2
+
 FROM quay.io/almalinuxorg/almalinux-bootc-rpi:10
 
 # Make update dnf cache
@@ -7,10 +9,9 @@ RUN dnf install -y dnf-plugins-core && dnf config-manager --set-enabled crb && d
 RUN dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora//tailscale.repo && \
     dnf install -y vim fish cockpit cockpit-ostree cockpit-files cockpit-podman neovim tailscale ripgrep \
     https://github.com/45Drives/cockpit-file-sharing/releases/download/v4.3.1-2/cockpit-file-sharing-4.3.1-2.el9.noarch.rpm \
-    https://github.com/45Drives/cockpit-identities/releases/download/v0.1.12/cockpit-identities-0.1.12-1.el8.noarch.rpm && \
+    https://github.com/45Drives/cockpit-identities/releases/download/v0.1.12/cockpit-identities-0.1.12-1.el8.noarch.rpm \
+    https://github.com/coder/code-server/releases/download/${CODE_SERVER_VERSION}/code-server-${CODE_SERVER_VERSION}-arm64.rpm && \
     systemctl enable tailscaled
-
-RUN curl -fsSL https://code-server.dev/install.sh | sh 
 
 # Clean up dnf cache to reduce image size
 RUN dnf clean all
