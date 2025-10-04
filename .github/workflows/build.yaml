@@ -63,6 +63,8 @@ jobs:
         if: steps.meta.outputs.tags != ''
         shell: bash
         run: |
+          set -Eeuo pipefail
+
           # Build with all generated tags and labels
           mapfile -t TAGS < <(printf '%s\n' "${{ steps.meta.outputs.tags }}")
           mapfile -t LABELS < <(printf '%s\n' "${{ steps.meta.outputs.labels }}")
@@ -71,22 +73,6 @@ jobs:
           for tag in "${TAGS[@]}"; do
             [[ -n "$tag" ]] && BUILD_ARGS+=( -t "$tag" )
           done
-
-          LABEL_ARGS=()
-          for label in "${LABELS[@]}"; do
-            [[ -n "$label" ]] && LABEL_ARGS+=( --label "$label" )
-          done
-
-          echo "Building image with tags:"
-          printf '  %s\n' "${TAGS[@]}"
-
-          podman build "${BUILD_ARGS[@]}" "${LABELS[@]}" .
-
-          echo "Pushing tags:"
-          for tag in "${TAGS[@]}"; do
-            podman push "$tag"
-          done
-
 
           LABEL_ARGS=()
           for label in "${LABELS[@]}"; do
