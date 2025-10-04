@@ -6,4 +6,7 @@ default:
     @just --list --justfile {{justfile()}}
 
 syncthing *args:
-    @just --justfile {{apps_dir}}/syncthing.justfile {{args}}
+    @just --justfile {{apps_dir}}/syncthing/justfile {{args}}
+
+homepage *args:
+    @just --justfile {{apps_dir}}/homepage/justfile {{args}}

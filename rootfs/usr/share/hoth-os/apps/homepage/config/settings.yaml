@@ -1,0 +1,12 @@
+---
+title: Hoth Dashboard
+theme: dark
+color: slate
+headerStyle: boxed
+layout:
+  Services:
+    style: row
+    columns: 3
+  System:
+    style: row
+    columns: 2

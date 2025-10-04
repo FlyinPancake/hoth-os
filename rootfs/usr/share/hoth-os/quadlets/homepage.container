@@ -1,0 +1,19 @@
+[Unit]
+Description=Homepage - Application dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/gethomepage/homepage:latest
+AutoUpdate=registry
+PublishPort=3000:3000
+Volume=/etc/homepage:/app/config:Z
+Environment=PUID=1000
+Environment=PGID=1000
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target default.target
