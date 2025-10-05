@@ -80,6 +80,7 @@ install:
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
+        -e "s|WEBUI_PORT=8080|WEBUI_PORT=$QBIT_PORT|g" \
         /usr/share/hoth-os/quadlets/qbittorrent.container \
         > "$QUADLET_DIR/qbittorrent.container"
 

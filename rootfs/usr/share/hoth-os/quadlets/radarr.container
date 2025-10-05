@@ -13,6 +13,13 @@ Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC
 
+HealthCmd=curl --fail --silent --show-error --retry 3 --max-time 5 http://localhost:7878
+HealthInterval=15s
+HealthTimeout=5s
+HealthStartPeriod=10s
+HealthRetries=3
+Notify=healthy
+
 [Service]
 Restart=always
 TimeoutStartSec=900
