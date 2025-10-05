@@ -179,9 +179,9 @@ configure-homepage sonarr_port radarr_port prowlarr_port qbit_port base_dir="/sr
         gum style --foreground 196 "Error: Prowlarr config not found at $PROWLARR_CONFIG"
     fi
 
-    SONARR_API=$(yq -p xml '.Config.ApiKey' "$SONARR_CONFIG")
-    RADARR_API=$(yq -p xml '.Config.ApiKey' "$RADARR_CONFIG")
-    PROWLARR_API=$(yq -p xml '.Config.ApiKey' "$PROWLARR_CONFIG")
+    SONARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$SONARR_CONFIG")
+    RADARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$RADARR_CONFIG")
+    PROWLARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$PROWLARR_CONFIG")
 
     if [ -z "$SONARR_API" ] || [ "$SONARR_API" == "null" ]; then
         SONARR_API=$(gum input --password --placeholder "Sonarr API Key" --prompt "Enter Sonarr API key: ")
@@ -208,17 +208,19 @@ configure-homepage sonarr_port radarr_port prowlarr_port qbit_port base_dir="/sr
     echo "qBittorrent password: ***"
     echo
 
-    gum confirm "Add Arr Stack to Homepage?" || exit 0
-    echo
+    tempdir=$(mktemp -d)
 
-    export __SONARR_PORT__="{{ sonarr_port }}"
-    export __RADARR_PORT__="{{ radarr_port }}"
-    export __PROWLARR_PORT__="{{ prowlarr_port }}"
-    export __QBIT_PORT__="{{ qbit_port }}"
-    export __SONARR_API__="$SONARR_API"
-    export __RADARR_API__="$RADARR_API"
-    export __PROWLARR_API__="$PROWLARR_API"
-    export __QBIT_USER__="$QBIT_USER"
-    export __QBIT_PASS__="$QBIT_PASS"
+    sed \
+        -e "s|__SONARR_PORT__|{{ sonarr_port }}|g" \
+        -e "s|__SONARR_API__|$SONARR_API|g" \
+        -e "s|__RADARR_PORT__|{{ radarr_port }}|g" \
+        -e "s|__RADARR_API__|$RADARR_API|g" \
+        -e "s|__PROWLARR_PORT__|{{ prowlarr_port }}|g" \
+        -e "s|__PROWLARR_API__|$PROWLARR_API|g" \
+        -e "s|__QBIT_PORT__|{{ qbit_port }}|g" \
+        -e "s|__QBIT_USER__|$QBIT_USER|g" \
+        -e "s|__QBIT_PASS__|$QBIT_PASS|g" \
+        /usr/share/hoth-os/apps/arr-stack/homepage_config.sh \
+        > $tempdir/homepage_config.sh
 
-    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/arr-stack/homepage_config.sh
+    just --justfile /usr/share/hoth-os/apps/homepage/justfile add-service $tempdir/homepage_config.sh

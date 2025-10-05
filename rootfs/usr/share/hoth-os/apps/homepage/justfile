@@ -83,36 +83,70 @@ logs follow="":
 add-service config_file:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     CONFIG_PATH="/etc/homepage"
     if [[ ! -d "$CONFIG_PATH" ]]; then
         gum style --foreground 196 "Error: Homepage not installed. Run 'hjust homepage install' first."
         exit 1
     fi
-    
-    if [[ ! -f "{{config_file}}" ]]; then
-        gum style --foreground 196 "Error: Config file not found: {{config_file}}"
+
+    if [[ ! -f "{{ config_file }}" ]]; then
+        gum style --foreground 196 "Error: Config file not found: {{ config_file }}"
         exit 1
     fi
-    
-    source "{{config_file}}"
-    
+
+    source "{{ config_file }}"
+
     HOSTNAME=$(hostname)
-    
+
     YAML_CONTENT=$(echo "$YAML_CONTENT" | sed "s/__HOSTNAME__/$HOSTNAME/g")
-    
+
     for var in $(env | grep '^__' | cut -d= -f1); do
         value="${!var}"
         YAML_CONTENT=$(echo "$YAML_CONTENT" | sed "s|$var|$value|g")
     done
-    
+
     if grep -q "$SERVICE_NAME:" "$CONFIG_PATH/services.yaml"; then
         gum style --foreground 196 "$SERVICE_NAME already configured in services.yaml"
         exit 1
     fi
-    
+
     echo "$YAML_CONTENT" | sudo tee -a "$CONFIG_PATH/services.yaml" > /dev/null
-    
+
     systemctl --user restart homepage.service 2>/dev/null || true
-    
+
     gum style --foreground 212 "✓ $SERVICE_NAME added to Homepage!"
+
+remove-service:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    CONFIG_PATH="/etc/homepage"
+    if [[ ! -d "$CONFIG_PATH" ]]; then
+        gum style --foreground 196 "Error: Homepage not installed. Run 'hjust homepage install' first."
+        exit 1
+    fi
+
+    services=$(yq eval '.[] | keys' "$CONFIG_PATH/services.yaml" | sed 's/- //g')
+    if [[ -z "$services" ]]; then
+        gum style --foreground 196 "No services configured in services.yaml"
+        exit 1
+    fi
+
+    service_name=$(echo "$services" | gum choose --header "Select a service to remove")
+
+
+    if ! grep -q "^- $service_name:" "$CONFIG_PATH/services.yaml"; then
+        gum style --foreground 196 "Error: $service_name not found in services.yaml"
+        exit 1
+    fi
+
+    gum confirm --default=false "Remove $service_name from Homepage?" || exit 0
+
+    gum style --foreground 212 "Removing $service_name from Homepage..."
+
+    sudo yq eval "del(.[].[\"$service_name\"]) | del(.[] | select(length == 0))" -i "$CONFIG_PATH/services.yaml"
+
+    systemctl --user restart homepage.service 2>/dev/null || true
+
+    gum style --foreground 212 "✓ $service_name removed from Homepage!"
