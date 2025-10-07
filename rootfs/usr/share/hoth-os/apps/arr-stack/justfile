@@ -107,7 +107,7 @@ install:
     while ! curl -s "http://localhost:$QBIT_PORT" >/dev/null; do sleep 2; done
     gum style --foreground 212 "✓ All services are up!"
 
-    just _setup
+    just _setup "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
 
     if gum confirm "Add to Homepage?"; then
         just /usr/share/hoth-os/apps/arr-stack/justfile configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
@@ -215,6 +215,19 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
         --radarr-apikey "$RADARR_API_KEY" \
         && gum style --foreground 212 "✓ Root folders configured successfully!" \
         || gum style --foreground 196 "Error: Failed to configure root folders"
+
+    gum style --foreground 212 "Adding qBittorrent as download client to Sonarr and Radarr..."
+
+    python3 /usr/share/hoth-os/apps/arr-stack/add_qbittorrent_client.py \
+        --sonarr-url "$SONARR_URL" \
+        --sonarr-apikey "$SONARR_API_KEY" \
+        --radarr-url "$RADARR_URL" \
+        --radarr-apikey "$RADARR_API_KEY" \
+        --qbittorrent-url "$QBIT_URL" \
+        --qbittorrent-username "$QBIT_USER" \
+        --qbittorrent-password "$QBIT_PASS" \
+        && gum style --foreground 212 "✓ qBittorrent added as download client!" \
+        || gum style --foreground 196 "Error: Failed to add qBittorrent as download client"
 
 uninstall:
     #!/usr/bin/env bash
