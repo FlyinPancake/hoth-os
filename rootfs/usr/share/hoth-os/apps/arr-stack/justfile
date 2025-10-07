@@ -1,5 +1,8 @@
 set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 
+quadlet_source_dir := "/usr/share/hoth-os/quadlets"
+quadlet_user_dir := config_directory() + "/containers/systemd"
+
 install:
     #!/usr/bin/env bash
     set -Eeuo pipefail
@@ -33,19 +36,17 @@ install:
     sudo mkdir -p "$DATA_PATH/config"/{sonarr,radarr,prowlarr,qbittorrent}
     sudo mkdir -p "$DATA_PATH/data"/{downloads,tv,movies}
     sudo chown -R $(id -u):$(id -g) "$DATA_PATH/config" "$DATA_PATH/data"
-
-    QUADLET_DIR="$HOME/.config/containers/systemd"
-    mkdir -p "$QUADLET_DIR"
+    mkdir -p "{{ quadlet_user_dir }}"
 
     echo "Installing pod quadlet..."
     sed \
         -e "s|PublishPort=8989:8989|PublishPort=$SONARR_PORT:8989|" \
         -e "s|PublishPort=7878:7878|PublishPort=$RADARR_PORT:7878|" \
         -e "s|PublishPort=9696:9696|PublishPort=$PROWLARR_PORT:9696|" \
-        -e "s|PublishPort=8080:8080|PublishPort=$QBIT_PORT:8080|" \
+        -e "s|PublishPort=8080:8080|PublishPort=$QBIT_PORT:$QBIT_PORT|" \
         -e "s|PublishPort=6881:6881|PublishPort=$TORRENT_PORT:6881|g" \
-        /usr/share/hoth-os/quadlets/arr-stack.pod \
-        > "$QUADLET_DIR/arr-stack.pod"
+        {{ quadlet_source_dir }}/arr-stack.pod \
+        > "{{ quadlet_user_dir }}/arr-stack.pod"
 
     echo "Installing Sonarr quadlet..."
     sed \
@@ -53,8 +54,8 @@ install:
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
-        /usr/share/hoth-os/quadlets/sonarr.container \
-        > "$QUADLET_DIR/sonarr.container"
+        {{ quadlet_source_dir }}/sonarr.container \
+        > "{{ quadlet_user_dir }}/sonarr.container"
 
     echo "Installing Radarr quadlet..."
     sed \
@@ -62,8 +63,8 @@ install:
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
-        /usr/share/hoth-os/quadlets/radarr.container \
-        > "$QUADLET_DIR/radarr.container"
+        {{ quadlet_source_dir }}/radarr.container \
+        > "{{ quadlet_user_dir }}/radarr.container"
 
     echo "Installing Prowlarr quadlet..."
     sed \
@@ -71,8 +72,8 @@ install:
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
-        /usr/share/hoth-os/quadlets/prowlarr.container \
-        > "$QUADLET_DIR/prowlarr.container"
+        {{ quadlet_source_dir }}/prowlarr.container \
+        > "{{ quadlet_user_dir }}/prowlarr.container"
 
     echo "Installing qBittorrent quadlet..."
     sed \
@@ -81,8 +82,8 @@ install:
         -e "s|PUID=1000|PUID=$(id -u)|" \
         -e "s|PGID=1000|PGID=$(id -g)|" \
         -e "s|WEBUI_PORT=8080|WEBUI_PORT=$QBIT_PORT|g" \
-        /usr/share/hoth-os/quadlets/qbittorrent.container \
-        > "$QUADLET_DIR/qbittorrent.container"
+        {{ quadlet_source_dir }}/qbittorrent.container \
+        > "{{ quadlet_user_dir }}/qbittorrent.container"
 
     loginctl enable-linger $(whoami)
 
@@ -106,9 +107,114 @@ install:
     while ! curl -s "http://localhost:$QBIT_PORT" >/dev/null; do sleep 2; done
     gum style --foreground 212 "✓ All services are up!"
 
+    just _setup
+
     if gum confirm "Add to Homepage?"; then
         just /usr/share/hoth-os/apps/arr-stack/justfile configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
     fi
+
+_setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    gum style --foreground 212 "Configuring services..."
+
+    BASE_DIR="{{ base_dir }}"
+
+    SONARR_CONFIG="$BASE_DIR/config/sonarr/config.xml"
+    RADARR_CONFIG="$BASE_DIR/config/radarr/config.xml"
+    PROWLARR_CONFIG="$BASE_DIR/config/prowlarr/config.xml"
+    QBIT_CONFIG="$BASE_DIR/config/qbittorrent/qBittorrent/qBittorrent.conf"
+
+    SONARR_URL="http://localhost:{{ sonarr_port }}"
+    RADARR_URL="http://localhost:{{ radarr_port }}"
+    PROWLARR_URL="http://localhost:{{ prowlarr_port }}"
+    QBIT_URL="http://localhost:{{ qbit_port }}"
+
+    if [ ! -f "$SONARR_CONFIG" ]; then
+        gum style --foreground 196 "Error: Sonarr config not found at $SONARR_CONFIG"
+        exit 1
+    fi
+
+    if [ ! -f "$RADARR_CONFIG" ]; then
+        gum style --foreground 196 "Error: Radarr config not found at $RADARR_CONFIG"
+        exit 1
+    fi
+
+    if [ ! -f "$PROWLARR_CONFIG" ]; then
+        gum style --foreground 196 "Error: Prowlarr config not found at $PROWLARR_CONFIG"
+        exit 1
+    fi
+
+    if [ ! -f "$QBIT_CONFIG" ]; then
+        gum style --foreground 196 "Error: qBittorrent config not found at $QBIT_CONFIG"
+        exit 1
+    fi
+
+    # Ask for qbit username and password
+    QBIT_USER=$(gum input --placeholder "admin" --prompt "qBittorrent username: " --value "admin")
+    QBIT_PASS=$(gum input --password --placeholder "Password" --prompt "qBittorrent password: ")
+
+    gum style --foreground 212 "Updating qBittorrent credentials..."
+    gum style --foreground 212 " shutting down qBittorrent..."
+    systemctl --user stop qbittorrent
+    # Update qBittorrent config with new username and password
+    hashed_pass=$(/usr/share/hoth-os/apps/arr-stack/qbit_pass.py generate "$QBIT_PASS")
+    sudo yq ".Preferences.WebUI\\Username = \"$QBIT_USER\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
+    sudo yq ".Preferences.WebUI\\Password_PBKDF2=\"@ByteArray($hashed_pass)\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
+    gum style --foreground 212 " starting qBittorrent..."
+    systemctl --user start qbittorrent
+    gum style --foreground 212 "✓ qBittorrent credentials updated"
+
+    gum style --foreground 212 "Adding Sonarr and Radarr to Prowlarr..."
+
+    PROWLARR_API_KEY=$(yq -p xml -o yaml '.Config.ApiKey' "$PROWLARR_CONFIG")
+    if [ -z "$PROWLARR_API_KEY" ] || [ "$PROWLARR_API_KEY" == "null" ]; then
+        gum style --foreground 196 "Error: Could not read Prowlarr API key from $PROWLARR_CONFIG"
+        exit 1
+    fi
+
+    SONARR_API_KEY=$(yq -p xml -o yaml '.Config.ApiKey' "$SONARR_CONFIG")
+    if [ -z "$SONARR_API_KEY" ] || [ "$SONARR_API_KEY" == "null" ]; then
+        gum style --foreground 196 "Error: Could not read Sonarr API key from $SONARR_CONFIG"
+        exit 1
+    fi
+
+    RADARR_API_KEY=$(yq -p xml -o yaml '.Config.ApiKey' "$RADARR_CONFIG")
+    if [ -z "$RADARR_API_KEY" ] || [ "$RADARR_API_KEY" == "null" ]; then
+        gum style --foreground 196 "Error: Could not read Radarr API key from $RADARR_CONFIG"
+        exit 1
+    fi
+
+    python3 /usr/share/hoth-os/apps/arr-stack/add_to_prowlarr.py \
+        --prowlarr-url "$PROWLARR_URL" \
+        --prowlarr-apikey "$PROWLARR_API_KEY" \
+        --arr-type "sonarr" \
+        --arr-url "$SONARR_URL" \
+        --arr-apikey "$SONARR_API_KEY" \
+        --name "Hoth Sonarr" \
+        && gum style --foreground 212 "✓ Sonarr added to Prowlarr" \
+        || gum style --foreground 196 "Error: Failed to add Sonarr to Prowlarr"
+
+    python3 /usr/share/hoth-os/apps/arr-stack/add_to_prowlarr.py \
+        --prowlarr-url "$PROWLARR_URL" \
+        --prowlarr-apikey "$PROWLARR_API_KEY" \
+        --arr-type "radarr" \
+        --arr-url "$RADARR_URL" \
+        --arr-apikey "$RADARR_API_KEY" \
+        --name "Hoth Radarr" \
+        && gum style --foreground 212 "✓ Radarr added to Prowlarr" \
+        || gum style --foreground 196 "Error: Failed to add Radarr to Prowlarr"
+
+    gum style --foreground 212 "Setting up root folders..."
+
+    python3 /usr/share/hoth-os/apps/arr-stack/setup_root_folders.py \
+        --sonarr-url "$SONARR_URL" \
+        --sonarr-apikey "$SONARR_API_KEY" \
+        --radarr-url "$RADARR_URL" \
+        --radarr-apikey "$RADARR_API_KEY" \
+        && gum style --foreground 212 "✓ Root folders configured successfully!" \
+        || gum style --foreground 196 "Error: Failed to configure root folders"
 
 uninstall:
     #!/usr/bin/env bash
