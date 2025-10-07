@@ -7,8 +7,7 @@ Image=lscr.io/linuxserver/sonarr:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
 Volume=/srv/config/sonarr:/config:Z
-Volume=/srv/data/downloads:/downloads:Z
-Volume=/srv/data/tv:/tv:Z
+Volume=/srv/data:/data:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC

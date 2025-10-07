@@ -7,8 +7,7 @@ Image=lscr.io/linuxserver/radarr:latest
 AutoUpdate=registry
 Pod=arr-stack.pod
 Volume=/srv/config/radarr:/config:Z
-Volume=/srv/data/downloads:/downloads:Z
-Volume=/srv/data/movies:/movies:Z
+Volume=/srv/data/data:/data:Z
 Environment=PUID=1000
 Environment=PGID=1000
 Environment=TZ=Etc/UTC
