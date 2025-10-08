@@ -52,8 +52,6 @@ install:
     sed \
         -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
-        -e "s|PUID=1000|PUID=$(id -u)|" \
-        -e "s|PGID=1000|PGID=$(id -g)|" \
         {{ quadlet_source_dir }}/sonarr.container \
         > "{{ quadlet_user_dir }}/sonarr.container"
 
@@ -61,8 +59,6 @@ install:
     sed \
         -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
-        -e "s|PUID=1000|PUID=$(id -u)|" \
-        -e "s|PGID=1000|PGID=$(id -g)|" \
         {{ quadlet_source_dir }}/radarr.container \
         > "{{ quadlet_user_dir }}/radarr.container"
 
@@ -70,8 +66,6 @@ install:
     sed \
         -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
-        -e "s|PUID=1000|PUID=$(id -u)|" \
-        -e "s|PGID=1000|PGID=$(id -g)|" \
         {{ quadlet_source_dir }}/prowlarr.container \
         > "{{ quadlet_user_dir }}/prowlarr.container"
 
@@ -79,8 +73,6 @@ install:
     sed \
         -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
-        -e "s|PUID=1000|PUID=$(id -u)|" \
-        -e "s|PGID=1000|PGID=$(id -g)|" \
         -e "s|WEBUI_PORT=8080|WEBUI_PORT=$QBIT_PORT|g" \
         {{ quadlet_source_dir }}/qbittorrent.container \
         > "{{ quadlet_user_dir }}/qbittorrent.container"
@@ -162,8 +154,8 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
     hashed_pass=$(/usr/share/hoth-os/apps/arr-stack/qbit_pass.py generate "$QBIT_PASS")
     sudo yq ".Preferences.WebUI\\Username = \"$QBIT_USER\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
     sudo yq ".Preferences.WebUI\\Password_PBKDF2=\"@ByteArray($hashed_pass)\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
-    sudo yq ".Preferences.Downloads\\SavePath = \"/data/downloads\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
-    sudo yq ".Preferences.Downloads\\TempPath = \"/data/downloads/incomplete\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
+    sudo yq ".BitTorrent.Session\\DefaultSavePath = \"/data/downloads\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
+    sudo yq ".BitTorrent.Session\\TempPath = \"/data/downloads/incomplete\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
     gum style --foreground 212 " starting qBittorrent..."
     systemctl --user start qbittorrent
     gum style --foreground 212 "✓ qBittorrent credentials updated"
@@ -228,6 +220,7 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
         --qbittorrent-url "$QBIT_URL" \
         --qbittorrent-username "$QBIT_USER" \
         --qbittorrent-password "$QBIT_PASS" \
+        --qbittorrent-port "{{ qbit_port }}" \
         && gum style --foreground 212 "✓ qBittorrent added as download client!" \
         || gum style --foreground 196 "Error: Failed to add qBittorrent as download client"
 

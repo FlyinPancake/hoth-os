@@ -153,6 +153,7 @@ def add_app_to_prowlarr(
         "configContract": schema.get("configContract"),
         "tags": [],
         "fields": fields,
+        "syncLevel": "fullSync",
     }
 
     if app_profile_id is not None:
@@ -206,7 +207,7 @@ def main():
     arr_url = args.arr_url or f"http://localhost:{args.port}"
 
     try:
-        created = add_app_to_prowlarr(
+        add_app_to_prowlarr(
             prowlarr_url=args.prowlarr_url,
             prowlarr_api_key=args.prowlarr_apikey,
             arr_type=args.arr_type,
@@ -216,7 +217,7 @@ def main():
             verify_tls=not args.insecure,
         )
         print("Successfully added application to Prowlarr:")
-        print(created)
+
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

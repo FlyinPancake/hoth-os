@@ -8,8 +8,8 @@ AutoUpdate=registry
 Pod=arr-stack.pod
 Volume=/srv/config/qbittorrent:/config:Z
 Volume=/srv/data:/data:Z
-Environment=PUID=1000
-Environment=PGID=1000
+Environment=PUID=0
+Environment=PGID=0
 Environment=TZ=Etc/UTC
 Environment=WEBUI_PORT=8080
 

@@ -8,8 +8,8 @@ AutoUpdate=registry
 Pod=arr-stack.pod
 Volume=/srv/config/sonarr:/config:Z
 Volume=/srv/data:/data:Z
-Environment=PUID=1000
-Environment=PGID=1000
+Environment=PUID=0
+Environment=PGID=0
 Environment=TZ=Etc/UTC
 
 HealthCmd=curl --fail --silent --show-error --retry 3 --max-time 5 http://localhost:8989

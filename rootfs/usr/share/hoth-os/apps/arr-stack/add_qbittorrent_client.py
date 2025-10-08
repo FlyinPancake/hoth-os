@@ -65,6 +65,8 @@ def add_qbittorrent_to_sonarr(
     qbittorrent_url: str,
     qbittorrent_username: str,
     qbittorrent_password: str,
+    qbittorrent_port: int,
+    *,
     verify_tls: bool = True,
 ) -> dict:
     """Add qBittorrent as a download client to Sonarr."""
@@ -82,7 +84,7 @@ def add_qbittorrent_to_sonarr(
     # Find qBittorrent schema
     qbittorrent_schema = None
     for schema in schemas:
-        if schema.get("implementation") == "qBittorrent":
+        if schema.get("implementation") == "QBittorrent":
             qbittorrent_schema = schema
             break
 
@@ -95,7 +97,7 @@ def add_qbittorrent_to_sonarr(
     # Set required fields
     field_map = {
         "host": "localhost",
-        "port": 8080,
+        "port": qbittorrent_port,
         "urlBase": "",
         "username": qbittorrent_username,
         "password": qbittorrent_password,
@@ -137,6 +139,8 @@ def add_qbittorrent_to_radarr(
     qbittorrent_url: str,
     qbittorrent_username: str,
     qbittorrent_password: str,
+    qbittorrent_port: int,
+    *,
     verify_tls: bool = True,
 ) -> dict:
     """Add qBittorrent as a download client to Radarr."""
@@ -154,7 +158,7 @@ def add_qbittorrent_to_radarr(
     # Find qBittorrent schema
     qbittorrent_schema = None
     for schema in schemas:
-        if schema.get("implementation") == "qBittorrent":
+        if schema.get("implementation") == "QBittorrent":
             qbittorrent_schema = schema
             break
 
@@ -167,7 +171,7 @@ def add_qbittorrent_to_radarr(
     # Set required fields
     field_map = {
         "host": "localhost",
-        "port": 8080,
+        "port": qbittorrent_port,
         "urlBase": "",
         "username": qbittorrent_username,
         "password": qbittorrent_password,
@@ -233,6 +237,11 @@ def main():
         help="qBittorrent password",
     )
     parser.add_argument(
+        "--qbittorrent-port",
+        type=int,
+        help="qBittorrent port",
+    )
+    parser.add_argument(
         "--insecure", action="store_true", help="Disable TLS certificate verification"
     )
     args = parser.parse_args()
@@ -256,12 +265,13 @@ def main():
     if args.sonarr_url and args.sonarr_apikey:
         total_count += 1
         try:
-            created = add_qbittorrent_to_sonarr(
+            add_qbittorrent_to_sonarr(
                 sonarr_url=args.sonarr_url,
                 sonarr_api_key=args.sonarr_apikey,
                 qbittorrent_url=args.qbittorrent_url,
                 qbittorrent_username=args.qbittorrent_username,
                 qbittorrent_password=args.qbittorrent_password,
+                qbittorrent_port=args.qbittorrent_port,
                 verify_tls=verify_tls,
             )
             print("✓ qBittorrent added to Sonarr as download client")
@@ -273,12 +283,13 @@ def main():
     if args.radarr_url and args.radarr_apikey:
         total_count += 1
         try:
-            created = add_qbittorrent_to_radarr(
+            add_qbittorrent_to_radarr(
                 radarr_url=args.radarr_url,
-                radarr_api_key=args.radarr_api_key,
+                radarr_api_key=args.radarr_apikey,
                 qbittorrent_url=args.qbittorrent_url,
                 qbittorrent_username=args.qbittorrent_username,
                 qbittorrent_password=args.qbittorrent_password,
+                qbittorrent_port=args.qbittorrent_port,
                 verify_tls=verify_tls,
             )
             print("✓ qBittorrent added to Radarr as download client")
