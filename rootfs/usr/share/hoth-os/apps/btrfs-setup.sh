@@ -116,7 +116,8 @@ if gum confirm "Apply configuration now (add systemd mount units and mount)?"; t
             sudo systemctl enable "srv-$SUBVOL.mount"
             gum style --foreground 212 "  ✓ Created and enabled $UNIT_PATH"
         fi
-
+    done
+    echo
     gum style --foreground 212 "Setting permissions..."
     sudo chown -R "$(id -u):$(id -g)" /var/srv/config /var/srv/data
     sudo chmod 755 /var/srv/config /var/srv/data
