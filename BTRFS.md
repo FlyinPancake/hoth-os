@@ -8,6 +8,9 @@ hoth-os expects two directories to exist at `/srv/`:
 - `/srv/config/` - Application configurations and databases (snapshotted)
 - `/srv/data/` - Media files and user data (no snapshots)
 
+Some scripts use `/var/srv/` instead of `/srv/`.
+Bootc based installs symlink `/srv/` to `/var/srv/`.
+
 These directories **must exist** before installing apps. This guide shows how to set them up as btrfs subvolumes with SSD optimizations and automated snapshots.
 
 ## Quick Setup
@@ -55,15 +58,15 @@ sudo umount /mnt
 
 ### 2. Configure Mounts
 
-Add to `/etc/fstab`:
+The setup script can generate a systemd mount unit for you. Alternatively, add to `/etc/fstab`:
 
-```fstab
-UUID=your-uuid-here  /srv/config      btrfs  subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0
-UUID=your-uuid-here  /srv/data        btrfs  subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2    0 0
-UUID=your-uuid-here  /srv/.snapshots  btrfs  subvol=@snapshots,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0
+```
+UUID=your-uuid-here /var/srv/config btrfs defaults,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,subvol=@config 0 0
+UUID=your-uuid-here /var/srv/data btrfs defaults,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,subvol=@data 0 0
+UUID=your-uuid-here /var/srv/.snapshots btrfs defaults,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2,subvol=@snapshots 0 0
 ```
 
-Find your UUID:
+To find your UUID:
 ```bash
 sudo blkid /dev/sdX
 ```
@@ -71,10 +74,10 @@ sudo blkid /dev/sdX
 ### 3. Mount and Set Permissions
 
 ```bash
-sudo mkdir -p /srv/{config,data,.snapshots}
+sudo mkdir -p /var/srv/{config,data,.snapshots}
 sudo mount -a
-sudo chown -R $(id -u):$(id -g) /srv/config /srv/data
-sudo chmod 755 /srv/config /srv/data
+sudo chown -R $(id -u):$(id -g) /var/srv/config /var/srv/data
+sudo chmod 755 /var/srv/config /var/srv/data
 ```
 
 ## Mount Options Explained
@@ -106,6 +109,7 @@ To restore config from a snapshot:
 hjust btrfs-snapshot status
 # Note the snapshot name you want to restore
 
+# Example services, adjust as needed
 systemctl --user stop arr-stack-pod.service syncthing.service homepage.service
 
 sudo mv /srv/config /srv/config.old
@@ -114,6 +118,7 @@ sudo btrfs subvolume snapshot /srv/.snapshots/config-TIMESTAMP /srv/config
 
 sudo chown -R $(id -u):$(id -g) /srv/config
 
+# Restart services
 systemctl --user start arr-stack-pod.service syncthing.service homepage.service
 ```
 

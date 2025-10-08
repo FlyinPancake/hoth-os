@@ -97,66 +97,54 @@ gum style --faint "Device: $DEVICE"
 gum style --faint "UUID: $UUID"
 echo
 
-if gum confirm "Apply configuration now (add to fstab and mount)?"; then
+if gum confirm "Apply configuration now (add systemd mount units and mount)?"; then
     echo
-    gum style --foreground 212 "Adding entries to /etc/fstab..."
-    
-    FSTAB_ENTRIES="
-# hoth-os btrfs subvolumes
-UUID=$UUID  /srv/config      btrfs  subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0
-UUID=$UUID  /srv/data        btrfs  subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2    0 0
-UUID=$UUID  /srv/.snapshots  btrfs  subvol=@snapshots,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0"
-    
-    echo "$FSTAB_ENTRIES" | sudo tee -a /etc/fstab > /dev/null
-    gum style --foreground 212 "✓ Updated /etc/fstab"
-    echo
-    
-    gum style --foreground 212 "Creating mount points..."
-    sudo mkdir -p /srv/{config,data,.snapshots}
-    gum style --foreground 212 "✓ Created mount points"
-    echo
-    
-    gum style --foreground 212 "Mounting filesystems..."
-    sudo mount -a
-    gum style --foreground 212 "✓ Mounted filesystems"
-    echo
-    
+    gum style --foreground 212 "Creating systemd mount units..."
+    for SUBVOL in config data .snapshots; do
+        MOUNT_PATH="/var/srv/$SUBVOL"
+        UNIT_PATH="/etc/systemd/system/srv-$SUBVOL.mount"
+        OPTIONS="subvol=@$SUBVOL,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2"
+        
+        if [ -f "$UNIT_PATH" ]; then
+            gum style --foreground 220 "  $UNIT_PATH already exists, skipping"
+        else
+            sudo sed -e "s|__UUID__|$UUID|g" \
+                     -e "s|__MOUNT_POINT__|$MOUNT_PATH|g" \
+                     -e "s|__FS_TYPE__|btrfs|g" \
+                     -e "s|__OPTIONS__|$OPTIONS|g" \
+                     /usr/share/hoth-os/disks/mount_template.mount | sudo tee "$UNIT_PATH" > /dev/null
+            sudo systemctl enable "srv-$SUBVOL.mount"
+            gum style --foreground 212 "  ✓ Created and enabled $UNIT_PATH"
+        fi
+
     gum style --foreground 212 "Setting permissions..."
-    sudo chown -R "$(id -u):$(id -g)" /srv/config /srv/data
-    sudo chmod 755 /srv/config /srv/data
+    sudo chown -R "$(id -u):$(id -g)" /var/srv/config /var/srv/data
+    sudo chmod 755 /var/srv/config /var/srv/data
     gum style --foreground 212 "✓ Permissions set"
     echo
     
     gum style --foreground 212 "✓ Setup complete!"
     echo
     gum style --faint "Mounted at:"
-    gum style --faint "  /srv/config (config & databases, with snapshots)"
-    gum style --faint "  /srv/data (media & downloads, no snapshots)"
-    gum style --faint "  /srv/.snapshots (snapshot storage)"
+    gum style --faint "  /var/srv/config (config & databases, with snapshots)"
+    gum style --faint "  /var/srv/data (media & downloads, no snapshots)"
+    gum style --faint "  /var/srv/.snapshots (snapshot storage)"
     echo
     gum style --faint "For automatic snapshots, see BTRFS.md"
 else
     echo
     gum style --border rounded --padding "1 2" --border-foreground 212 "Manual Setup Instructions"
     echo
-    gum style "1. Add to /etc/fstab:"
+    gum style --faint "To complete the setup, create the following mount units and mount them:"
     echo
-    cat << EOF
-UUID=$UUID  /srv/config      btrfs  subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0
-UUID=$UUID  /srv/data        btrfs  subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2    0 0
-UUID=$UUID  /srv/.snapshots  btrfs  subvol=@snapshots,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2  0 0
-EOF
+    for SUBVOL in config data .snapshots; do
+        MOUNT_PATH="/var/srv/$SUBVOL"
+        gum style --faint "  $MOUNT_PATH"
+    done
     echo
-    gum style "2. Create mount points and mount:"
+    gum style --faint "Then set permissions:"
+    gum style --faint "  sudo chown -R \$(id -u):\$(id -g) /var/srv/config /var/srv/data"
+    gum style --faint "  sudo chmod 755 /var/srv/config /var/srv/data"
     echo
-    cat << EOF
-sudo mkdir -p /srv/{config,data,.snapshots}
-sudo mount -a
-sudo chown -R \$(id -u):\$(id -g) /srv/config /srv/data
-sudo chmod 755 /srv/config /srv/data
-EOF
-    echo
-    gum style "3. Set up automatic snapshots (optional):"
-    gum style --faint "   See BTRFS.md for snapshot configuration"
-    echo
+    gum style --faint "For automatic snapshots, see BTRFS.md in the hoth-os repository."
 fi
