@@ -1,6 +1,6 @@
 set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 
-quadlet_source_dir := "/usr/share/hoth-os/quadlets"
+quadlet_source_dir := "/usr/share/hoth-os/apps/arr-stack/quadlets"
 quadlet_user_dir := config_directory() + "/containers/systemd"
 
 install:
@@ -68,6 +68,13 @@ install:
         -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
         {{ quadlet_source_dir }}/prowlarr.container \
         > "{{ quadlet_user_dir }}/prowlarr.container"
+
+    echo "Installing FlareSolverr quadlet..."
+    sed \
+        -e "s|Volume=/srv/config|Volume=$DATA_PATH/config|g" \
+        -e "s|Volume=/srv/data|Volume=$DATA_PATH/data|g" \
+        {{ quadlet_source_dir }}/flaresolverr.container \
+        > "{{ quadlet_user_dir }}/flaresolverr.container"
 
     echo "Installing qBittorrent quadlet..."
     sed \
@@ -160,7 +167,7 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
     systemctl --user start qbittorrent
     gum style --foreground 212 "✓ qBittorrent credentials updated"
 
-    gum style --foreground 212 "Adding Sonarr and Radarr to Prowlarr..."
+    gum style --foreground 212 "Configuring Prowlarr..."
 
     PROWLARR_API_KEY=$(yq -p xml -o yaml '.Config.ApiKey' "$PROWLARR_CONFIG")
     if [ -z "$PROWLARR_API_KEY" ] || [ "$PROWLARR_API_KEY" == "null" ]; then
@@ -179,6 +186,16 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
         gum style --foreground 196 "Error: Could not read Radarr API key from $RADARR_CONFIG"
         exit 1
     fi
+
+    gum style --foreground 212 "Adding FlareSolverr to Prowlarr..."
+    python3 /usr/share/hoth-os/apps/arr-stack/add_flaresolverr_to_prowlarr.py \
+        --prowlarr-url "$PROWLARR_URL" \
+        --prowlarr-apikey "$PROWLARR_API_KEY" \
+        --flaresolverr-url "http://localhost:8191" \
+        && gum style --foreground 212 "✓ FlareSolverr added to Prowlarr" \
+        || gum style --foreground 196 "Error: Failed to add FlareSolverr to Prowlarr"
+
+    gum style --foreground 212 "Adding Sonarr and Radarr to Prowlarr..."
 
     python3 /usr/share/hoth-os/apps/arr-stack/add_to_prowlarr.py \
         --prowlarr-url "$PROWLARR_URL" \
