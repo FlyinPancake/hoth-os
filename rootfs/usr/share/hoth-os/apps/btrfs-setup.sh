@@ -99,6 +99,33 @@ echo
 
 if gum confirm "Apply configuration now (add systemd mount units and mount)?"; then
     echo
+    gum style --foreground 212 "Checking for existing data in /var/srv/config and /var/srv/data..."
+    if [ -d /var/srv/config ]; then
+        if [ "$(ls -A /var/srv/config)" ]; then
+            gum style --foreground 220 "Warning: /var/srv/config is not empty"
+            if gum confirm "Move existing data to btrfs subvolume after mounting?"; then
+                mkdir -p /mnt/temp
+                mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
+                rsync -ahP /var/srv/config/ /mnt/temp/
+                umount /mnt/temp
+                rmdir /mnt/temp
+            fi
+        fi
+    fi
+
+    if [ -d /var/srv/data ]; then
+        if [ "$(ls -A /var/srv/data)" ]; then
+            gum style --foreground 220 "Warning: /var/srv/data is not empty"
+            if gum confirm "Move existing data to btrfs subvolume after mounting?"; then
+                mkdir -p /mnt/temp
+                mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
+                rsync -ahP /var/srv/data/ /mnt/temp/
+                umount /mnt/temp
+                rmdir /mnt/temp
+            fi
+        fi
+    fi
+
     gum style --foreground 212 "Creating systemd mount units..."
     for SUBVOL in config data .snapshots; do
         MOUNT_PATH="/var/srv/$SUBVOL"
