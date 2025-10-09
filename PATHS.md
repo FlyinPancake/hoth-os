@@ -49,28 +49,24 @@ See [BTRFS.md](BTRFS.md) for setup instructions.
 | `/srv/data/tv/` | TV series library | @data |
 | `/srv/data/movies/` | Movie library | @data |
 
-### Homepage
-| Path | Purpose |
-|------|---------|
-| `/etc/homepage/` | Configuration directory |
-| `/etc/homepage/services.yaml` | Service definitions |
-| `/etc/homepage/bookmarks.yaml` | Bookmark definitions |
-| `/etc/homepage/widgets.yaml` | Widget definitions |
-| `/etc/homepage/settings.yaml` | General settings |
-| `/etc/homepage/docker.yaml` | Docker integration config |
+### Glance
+| Path | Purpose | Subvolume |
+|------|---------|-----------|
+| `/srv/config/glance/` | Glance configuration | @config |
+| `/srv/config/glance/glance.yml` | Main config file | @config |
 
 ## App Configuration Templates
 
 | Path | Purpose |
 |------|---------|
 | `/usr/share/hoth-os/apps/<app>/justfile` | App installer recipes |
-| `/usr/share/hoth-os/apps/<app>/homepage_config.sh` | Homepage integration template |
+| `/usr/share/hoth-os/apps/<app>/glance.yml.fragment` | Glance integration YAML fragment |
 | `/usr/share/hoth-os/apps/<app>/config/` | Default config files (optional) |
 
 ## Notes
 
 - `/srv/config/` and `/srv/data/` directories are created during app installation
 - Quadlet files are copied from `/usr/share/hoth-os/quadlets/` to `$HOME/.config/containers/systemd/` on install
-- Homepage configs use `__VARIABLE__` placeholders that are substituted during configuration
+- Glance configs use `__VARIABLE__` placeholders that are substituted via envsubst during configuration
 - Data paths are bind-mounted into containers via quadlet definitions
 - Btrfs subvolumes should be created before installing apps (see BTRFS.md)

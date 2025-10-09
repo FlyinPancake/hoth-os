@@ -1,0 +1,13 @@
+[Unit]
+Description=Glance Pod
+After=network-online.target
+
+[Pod]
+PodmanArgs=--infra-name=glance-infra
+PublishPort=8090:8080
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,28 @@
+[Unit]
+Description=Glance - Self-hosted dashboard
+After=network-online.target
+Wants=network-online.target
+
+[Container]
+Image=ghcr.io/glanceapp/glance:latest
+AutoUpdate=registry
+Volume=/srv/config/glance:/app/config:Z
+Environment=TZ=__TIMEZONE__
+
+HealthCmd=curl --fail http://localhost:8080/ || exit 1
+HealthInterval=5m
+HealthRetries=3
+HealthStartPeriod=2m
+HealthTimeout=30s
+
+HealthStartupCmd=curl --fail http://localhost:8080/ || exit 1
+HealthStartupInterval=5s
+HealthStartupRetries=60
+HealthStartupTimeout=5s
+
+[Service]
+Restart=always
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target default.target

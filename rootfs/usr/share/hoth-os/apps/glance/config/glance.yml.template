@@ -1,0 +1,19 @@
+theme: dark
+branding:
+  title: Hoth Dashboard
+
+pages:
+  - name: Home
+    columns:
+      - size: small
+        widgets:
+          - type: monitor
+            title: System
+            cache: 1m
+            sites:
+              - title: Cockpit
+                url: http://__HOSTNAME__:9090
+                icon: si:cockpit
+
+      - size: full
+        widgets: []

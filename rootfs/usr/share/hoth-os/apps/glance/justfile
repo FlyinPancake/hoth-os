@@ -1,0 +1,133 @@
+set shell := ["bash", "-Eeuo", "pipefail", "-c"]
+
+quadlets_src_dir = "/usr/share/hoth-os/apps/glance/quadlets"
+
+install:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Glance Setup Wizard"
+    echo
+
+    WEB_PORT=$(gum input --placeholder "8090" --prompt "Web UI port: " --value "8090")
+    echo "Web UI port: $WEB_PORT"
+
+    HOSTNAME=$(hostname)
+    echo "Hostname: $HOSTNAME"
+
+    TIMEZONE=$(timedatectl show -p Timezone --value)
+    echo "Timezone: $TIMEZONE"
+    echo
+
+    gum confirm "Install Glance with these settings?" || exit 0
+    echo
+
+    CONFIG_PATH="/srv/config/glance"
+
+    echo "Creating config directory..."
+    sudo mkdir -p "$CONFIG_PATH"
+
+    echo "Copying default config..."
+    sudo cp /usr/share/hoth-os/apps/glance/config/glance.yml.template "$CONFIG_PATH/glance.yml"
+
+    sudo sed -i "s/__HOSTNAME__/$HOSTNAME/g" "$CONFIG_PATH/glance.yml"
+
+    sudo chown -R $(id -u):$(id -g) "$CONFIG_PATH"
+
+    QUADLET_DIR="$HOME/.config/containers/systemd"
+    mkdir -p "$QUADLET_DIR"
+
+    echo "Installing quadlet..."
+    sed \
+        -e "s|__TIMEZONE__|$TIMEZONE|" \
+        {{ quadlets_src_dir }}/glance.container \
+        > "$QUADLET_DIR/glance.container"
+
+    sed \
+        -e "s|PublishPort=8090:8080|PublishPort=$WEB_PORT:8080|" \
+        {{ quadlets_src_dir }}/glance.pod \
+        > "$QUADLET_DIR/glance.pod"
+
+    loginctl enable-linger $(whoami)
+
+    echo "Starting service..."
+    systemctl --user daemon-reload
+    systemctl --user start glance.service
+    echo
+
+    gum style --foreground 212 "✓ Glance installed successfully!"
+    gum style --faint "Web UI: http://localhost:$WEB_PORT"
+    gum style --faint "Config: $CONFIG_PATH/glance.yml"
+
+uninstall:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    gum confirm --default=false "Uninstall Glance? (config will be preserved)" || exit 0
+
+    systemctl --user stop glance.service 2>/dev/null || true
+    rm -f "$HOME/.config/containers/systemd/glance.container"
+    systemctl --user daemon-reload
+
+    gum style --foreground 212 "✓ Glance uninstalled"
+
+status:
+    @systemctl --user status glance.service
+
+logs follow="":
+    #!/usr/bin/env bash
+    if [[ "{{ follow }}" == "follow" || "{{ follow }}" == "f" ]]; then
+        journalctl --user -u glance.service -f
+    else
+        journalctl --user -u glance.service -n 50
+    fi
+
+add-service app_name:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    APP_NAME="{{ app_name }}"
+    FRAGMENT="/usr/share/hoth-os/apps/$APP_NAME/glance.yml.fragment"
+    CONFIG="/srv/config/glance/glance.yml"
+
+    if [[ ! -f "$CONFIG" ]]; then
+        gum style --foreground 196 "Error: Glance not installed. Run 'hjust glance install' first."
+        exit 1
+    fi
+
+    if [[ ! -f "$FRAGMENT" ]]; then
+        gum style --foreground 196 "Error: No glance.yml.fragment for $APP_NAME"
+        exit 1
+    fi
+
+    TEMP=$(mktemp)
+    envsubst < "$FRAGMENT" > "$TEMP"
+
+    yq eval -i '.pages[0].columns[1].widgets += load("'$TEMP'")' "$CONFIG"
+    rm "$TEMP"
+
+    gum style --foreground 212 "✓ $APP_NAME added to Glance"
+
+remove-service:
+    #!/usr/bin/env bash
+    set -Eeuo pipefail
+
+    CONFIG="/srv/config/glance/glance.yml"
+    if [[ ! -f "$CONFIG" ]]; then
+        gum style --foreground 196 "Error: Glance not installed. Run 'hjust glance install' first."
+        exit 1
+    fi
+
+    widgets=$(yq eval '.pages[0].columns[1].widgets[] | select(.title != null) | .title' "$CONFIG")
+    if [[ -z "$widgets" ]]; then
+        gum style --foreground 196 "No widgets configured"
+        exit 1
+    fi
+
+    widget_title=$(echo "$widgets" | gum choose --header "Select a widget to remove")
+
+    gum confirm --default=false "Remove '$widget_title' from Glance?" || exit 0
+
+    yq eval -i 'del(.pages[0].columns[1].widgets[] | select(.title == "'"$widget_title"'"))' "$CONFIG"
+
+    gum style --foreground 212 "✓ $widget_title removed from Glance"

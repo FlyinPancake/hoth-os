@@ -108,8 +108,10 @@ install:
 
     just _setup "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
 
-    if gum confirm "Add to Homepage?"; then
-        just configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
+    if systemctl --user is-active glance.service &>/dev/null; then
+        if gum confirm "Add to Glance?"; then
+            just configure-glance "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
+        fi
     fi
 
 _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
@@ -306,75 +308,19 @@ logs service="" follow="":
         fi
     fi
 
-configure-homepage sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
+configure-glance sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
     #!/usr/bin/env bash
     set -Eeuo pipefail
 
-    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Arr Stack to Homepage"
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Arr Stack to Glance"
     echo
 
-    BASE_DIR="{{ base_dir }}"
+    export HOSTNAME=$(hostname)
+    export __SONARR_PORT__="{{ sonarr_port }}"
+    export __RADARR_PORT__="{{ radarr_port }}"
+    export __PROWLARR_PORT__="{{ prowlarr_port }}"
+    export __QBIT_PORT__="{{ qbit_port }}"
 
-    gum style --foreground 212 "Reading API keys from config files..."
+    just --justfile /usr/share/hoth-os/apps/glance/justfile add-service arr-stack
 
-    SONARR_CONFIG="$BASE_DIR/config/sonarr/config.xml"
-    RADARR_CONFIG="$BASE_DIR/config/radarr/config.xml"
-    PROWLARR_CONFIG="$BASE_DIR/config/prowlarr/config.xml"
-
-    if [ ! -f "$SONARR_CONFIG" ]; then
-        gum style --foreground 196 "Error: Sonarr config not found at $SONARR_CONFIG"
-    fi
-
-    if [ ! -f "$RADARR_CONFIG" ]; then
-        gum style --foreground 196 "Error: Radarr config not found at $RADARR_CONFIG"
-    fi
-
-    if [ ! -f "$PROWLARR_CONFIG" ]; then
-        gum style --foreground 196 "Error: Prowlarr config not found at $PROWLARR_CONFIG"
-    fi
-
-    SONARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$SONARR_CONFIG")
-    RADARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$RADARR_CONFIG")
-    PROWLARR_API=$(yq -p xml -o yaml '.Config.ApiKey' "$PROWLARR_CONFIG")
-
-    if [ -z "$SONARR_API" ] || [ "$SONARR_API" == "null" ]; then
-        SONARR_API=$(gum input --password --placeholder "Sonarr API Key" --prompt "Enter Sonarr API key: ")
-    fi
-
-    if [ -z "$RADARR_API" ] || [ "$RADARR_API" == "null" ]; then
-        RADARR_API=$(gum input --password --placeholder "Radarr API Key" --prompt "Enter Radarr API key: ")
-    fi
-
-    if [ -z "$PROWLARR_API" ] || [ "$PROWLARR_API" == "null" ]; then
-        PROWLARR_API=$(gum input --password --placeholder "Prowlarr API Key" --prompt "Enter Prowlarr API key: ")
-    fi
-
-    gum style --foreground 212 "✓ API keys read successfully"
-    echo "Sonarr API: ${SONARR_API:0:8}..."
-    echo "Radarr API: ${RADARR_API:0:8}..."
-    echo "Prowlarr API: ${PROWLARR_API:0:8}..."
-    echo
-
-    QBIT_USER=$(gum input --placeholder "admin" --prompt "qBittorrent username: " --value "admin")
-    echo "qBittorrent username: $QBIT_USER"
-
-    QBIT_PASS=$(gum input --password --placeholder "Password" --prompt "qBittorrent password: ")
-    echo "qBittorrent password: ***"
-    echo
-
-    tempdir=$(mktemp -d)
-
-    sed \
-        -e "s|__SONARR_PORT__|{{ sonarr_port }}|g" \
-        -e "s|__SONARR_API__|$SONARR_API|g" \
-        -e "s|__RADARR_PORT__|{{ radarr_port }}|g" \
-        -e "s|__RADARR_API__|$RADARR_API|g" \
-        -e "s|__PROWLARR_PORT__|{{ prowlarr_port }}|g" \
-        -e "s|__PROWLARR_API__|$PROWLARR_API|g" \
-        -e "s|__QBIT_PORT__|{{ qbit_port }}|g" \
-        -e "s|__QBIT_USER__|$QBIT_USER|g" \
-        -e "s|__QBIT_PASS__|$QBIT_PASS|g" \
-        /usr/share/hoth-os/apps/arr-stack/homepage_config.sh \
-        > $tempdir/homepage_config.sh
-
-    just --justfile /usr/share/hoth-os/apps/homepage/justfile add-service $tempdir/homepage_config.sh
+    gum style --foreground 212 "✓ Arr Stack added to Glance!"

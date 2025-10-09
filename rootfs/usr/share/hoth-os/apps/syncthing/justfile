@@ -3,31 +3,31 @@ set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 install:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     gum style --border rounded --padding "1 2" --border-foreground 212 "Syncthing Setup Wizard"
     echo
-    
+
     DATA_PATH=$(gum input --placeholder "/srv" --prompt "Base path: " --value "/srv")
     echo "Base path: $DATA_PATH"
-    
+
     WEB_PORT=$(gum input --placeholder "8384" --prompt "Web UI port: " --value "8384")
     echo "Web UI port: $WEB_PORT"
-    
+
     DEVICE_NAME=$(gum input --placeholder "hoth-pi" --prompt "Device name: " --value "hoth-pi")
     echo "Device name: $DEVICE_NAME"
     echo
-    
+
     gum confirm "Install Syncthing with these settings?" || exit 0
     echo
-    
+
     echo "Creating directories..."
     sudo mkdir -p "$DATA_PATH/config/syncthing"
     sudo mkdir -p "$DATA_PATH/data/syncthing"
     sudo chown -R $(id -u):$(id -g) "$DATA_PATH/config/syncthing" "$DATA_PATH/data/syncthing"
-    
+
     QUADLET_DIR="$HOME/.config/containers/systemd"
     mkdir -p "$QUADLET_DIR"
-    
+
     echo "Installing quadlet..."
     sed \
         -e "s|PublishPort=8384:8384|PublishPort=$WEB_PORT:8384|" \
@@ -37,33 +37,35 @@ install:
         -e "s|PGID=1000|PGID=$(id -g)|" \
         /usr/share/hoth-os/quadlets/syncthing.container \
         > "$QUADLET_DIR/syncthing.container"
-    
+
     loginctl enable-linger $(whoami)
-    
+
     echo "Starting service..."
     systemctl --user daemon-reload
     systemctl --user start syncthing.service
     echo
-    
+
     gum style --foreground 212 "✓ Syncthing installed successfully!"
     gum style --faint "Web UI: http://localhost:$WEB_PORT | Data: $DATA_PATH"
     gum style --faint "Device name: $DEVICE_NAME (configure in web UI)"
     echo
-    
-    if gum confirm "Add to Homepage?"; then
-        just /usr/share/hoth-os/apps/syncthing/justfile configure-homepage "$WEB_PORT"
+
+    if systemctl --user is-active glance.service &>/dev/null; then
+        if gum confirm "Add to Glance?"; then
+            just /usr/share/hoth-os/apps/syncthing/justfile configure-glance "$WEB_PORT"
+        fi
     fi
 
 uninstall:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     gum confirm --default=false "Uninstall Syncthing? (data will be preserved)" || exit 0
-    
+
     gum spin --spinner dot --title "Stopping service..." -- systemctl --user disable --now syncthing.service 2>/dev/null || true
     rm -f "$HOME/.config/containers/systemd/syncthing.container"
     systemctl --user daemon-reload
-    
+
     gum style --foreground 212 "✓ Syncthing uninstalled"
 
 status:
@@ -71,24 +73,22 @@ status:
 
 logs follow="":
     #!/usr/bin/env bash
-    if [[ "{{follow}}" == "follow" || "{{follow}}" == "f" ]]; then
+    if [[ "{{ follow }}" == "follow" || "{{ follow }}" == "f" ]]; then
         journalctl --user -u syncthing.service -f
     else
         journalctl --user -u syncthing.service -n 50
     fi
 
-configure-homepage port:
+configure-glance port:
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
-    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Syncthing to Homepage"
-    echo
-    
-    gum confirm "Add Syncthing to Homepage?" || exit 0
-    echo
-    
-    export __PORT__="{{port}}"
-    
-    just /usr/share/hoth-os/apps/homepage/justfile add-service /usr/share/hoth-os/apps/syncthing/homepage_config.sh
 
+    gum style --border rounded --padding "1 2" --border-foreground 212 "Add Syncthing to Glance"
+    echo
 
+    export HOSTNAME=$(hostname)
+    export __PORT__="{{ port }}"
+
+    just --justfile /usr/share/hoth-os/apps/glance/justfile add-service syncthing
+
+    gum style --foreground 212 "✓ Syncthing added to Glance!"

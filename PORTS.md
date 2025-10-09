@@ -6,7 +6,7 @@
 | 8384 | Syncthing | User-installed | Web UI for file sync |
 | 22000 | Syncthing | User-installed | TCP/UDP data transfer |
 | 21027 | Syncthing | User-installed | UDP discovery |
-| 8090 | Homepage | User-installed | Dashboard (configurable during install) |
+| 8090 | Glance | User-installed | Dashboard (configurable during install) |
 | 8989 | Sonarr | User-installed | TV series manager (configurable during install) |
 | 7878 | Radarr | User-installed | Movie manager (configurable during install) |
 | 9696 | Prowlarr | User-installed | Indexer manager (configurable during install) |
@@ -19,4 +19,4 @@
 ## Notes
 - User-installed apps can have their ports customized during the `hjust <app> install` wizard
 - Cockpit port cannot be changed as it's a system service
-- Homepage defaults to 8090 but prompts during installation
+- Glance defaults to 8090 but prompts during installation

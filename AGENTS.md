@@ -15,7 +15,7 @@ Code style:
 - **Containerfile**: group RUN steps with `&&`; pkgs: `dnf -y ... && dnf clean all && rm -rf /var/cache/dnf`; layer order: least→most changed
 - **justfile**: `set shell := ["bash", "-Eeuo", "pipefail", "-c"]`; kebab-case names; idempotent; gum for wizards (apps only)
 - **App justfiles**: echo settings after gum input; 4 recipes: install, uninstall, status, logs (logs take optional follow="")
-- **Homepage integration**: provide `homepage_config.sh` with `SERVICE_NAME` and `YAML_CONTENT` using `__VARIABLE__` placeholders
+- **Glance integration**: provide `glance.yml.fragment` with widget YAML using `__VARIABLE__` placeholders (substituted via envsubst); use monitor widgets for URL checking
 - **Paths**: `/srv/config/<app>` (@config subvol, snapshotted) and `/srv/data/<app>` (@data subvol, no snapshots); document in PATHS.md
 - **Ports**: check PORTS.md; default 8000+; apps prompt during install
 - **YAML/CI**: 2-space indent; pin action versions; descriptive step names

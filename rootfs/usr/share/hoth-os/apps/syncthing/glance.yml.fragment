@@ -1,0 +1,7 @@
+- type: monitor
+  title: Syncthing
+  cache: 1m
+  sites:
+    - title: Web UI
+      url: http://$HOSTNAME:$__PORT__
+      icon: si:syncthing
