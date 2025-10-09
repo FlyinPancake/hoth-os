@@ -1,6 +1,5 @@
 [Unit]
-Description=Mount Template
-After=local-fs.target
+Description=__MOUNT_DESCRIPTION__
 
 [Mount]
 What=/dev/disk/by-uuid/__UUID__
@@ -9,4 +8,4 @@ Type=__FS_TYPE__
 Options=__OPTIONS__
 
 [Install]
-WantedBy=multi-user.target
+WantedBy=local-fs.target

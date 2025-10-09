@@ -104,11 +104,11 @@ if gum confirm "Apply configuration now (add systemd mount units and mount)?"; t
         if [ "$(ls -A /var/srv/config)" ]; then
             gum style --foreground 220 "Warning: /var/srv/config is not empty"
             if gum confirm "Move existing data to btrfs subvolume after mounting?"; then
-                mkdir -p /mnt/temp
-                mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
-                rsync -ahP /var/srv/config/ /mnt/temp/
-                umount /mnt/temp
-                rmdir /mnt/temp
+                sudo mkdir -p /mnt/temp
+                sudo mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@config,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
+                sudo rsync -ahP /var/srv/config/ /mnt/temp/
+                sudo umount /mnt/temp
+                sudo rmdir /mnt/temp
             fi
         fi
     fi
@@ -117,11 +117,11 @@ if gum confirm "Apply configuration now (add systemd mount units and mount)?"; t
         if [ "$(ls -A /var/srv/data)" ]; then
             gum style --foreground 220 "Warning: /var/srv/data is not empty"
             if gum confirm "Move existing data to btrfs subvolume after mounting?"; then
-                mkdir -p /mnt/temp
-                mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
-                rsync -ahP /var/srv/data/ /mnt/temp/
-                umount /mnt/temp
-                rmdir /mnt/temp
+                sudo mkdir -p /mnt/temp
+                sudo mount /dev/disk/by-uuid/"$UUID" /mnt/temp -o subvol=@data,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2
+                sudo rsync -ahP /var/srv/data/ /mnt/temp/
+                sudo umount /mnt/temp
+                sudo rmdir /mnt/temp
             fi
         fi
     fi
@@ -129,18 +129,19 @@ if gum confirm "Apply configuration now (add systemd mount units and mount)?"; t
     gum style --foreground 212 "Creating systemd mount units..."
     for SUBVOL in config data .snapshots; do
         MOUNT_PATH="/var/srv/$SUBVOL"
-        UNIT_PATH="/etc/systemd/system/srv-$SUBVOL.mount"
+        UNIT_PATH="/etc/systemd/system/var-srv-$SUBVOL.mount"
         OPTIONS="subvol=@$SUBVOL,noatime,compress=zstd:3,ssd,discard=async,space_cache=v2"
         
         if [ -f "$UNIT_PATH" ]; then
             gum style --foreground 220 "  $UNIT_PATH already exists, skipping"
         else
-            sudo sed -e "s|__UUID__|$UUID|g" \
+            sudo sed -e "s|__MOUNT_DESCRIPTION__|Mount for /var/srv/$SUBVOL|g" \
+                     -e "s|__UUID__|$UUID|g" \
                      -e "s|__MOUNT_POINT__|$MOUNT_PATH|g" \
                      -e "s|__FS_TYPE__|btrfs|g" \
                      -e "s|__OPTIONS__|$OPTIONS|g" \
                      /usr/share/hoth-os/disks/mount_template.mount | sudo tee "$UNIT_PATH" > /dev/null
-            sudo systemctl enable "srv-$SUBVOL.mount"
+            sudo systemctl enable "var-srv-$SUBVOL.mount"
             gum style --foreground 212 "  ✓ Created and enabled $UNIT_PATH"
         fi
     done
