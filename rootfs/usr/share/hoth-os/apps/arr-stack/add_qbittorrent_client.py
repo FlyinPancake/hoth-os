@@ -74,6 +74,13 @@ def add_qbittorrent_to_sonarr(
     qbittorrent_url = _normalize_base_url(qbittorrent_url)
     headers = _headers(sonarr_api_key)
 
+    clients = _get_json(
+        urljoin(sonarr_url + "/", "api/v3/downloadclient"), headers, verify_tls
+    )
+
+    if any(client.get("name") == "qBittorrent" for client in clients or []):
+        return {}
+
     # Get download client schemas to find qBittorrent
     schema_url = urljoin(sonarr_url + "/", "api/v3/downloadclient/schema")
     schemas = _get_json(schema_url, headers, verify_tls)
@@ -147,6 +154,13 @@ def add_qbittorrent_to_radarr(
     radarr_url = _normalize_base_url(radarr_url)
     qbittorrent_url = _normalize_base_url(qbittorrent_url)
     headers = _headers(radarr_api_key)
+
+    clients = _get_json(
+        urljoin(radarr_url + "/", "api/v3/downloadclient"), headers, verify_tls
+    )
+
+    if any(client.get("name") == "qBittorrent" for client in clients or []):
+        return {}
 
     # Get download client schemas to find qBittorrent
     schema_url = urljoin(radarr_url + "/", "api/v3/downloadclient/schema")

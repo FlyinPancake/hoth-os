@@ -109,7 +109,7 @@ install:
     just _setup "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
 
     if gum confirm "Add to Homepage?"; then
-        just /usr/share/hoth-os/apps/arr-stack/justfile configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
+        just configure-homepage "$SONARR_PORT" "$RADARR_PORT" "$PROWLARR_PORT" "$QBIT_PORT" "$DATA_PATH"
     fi
 
 _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
@@ -119,12 +119,10 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
     gum style --foreground 212 "Configuring services..."
 
     BASE_DIR="{{ base_dir }}"
-
     SONARR_CONFIG="$BASE_DIR/config/sonarr/config.xml"
     RADARR_CONFIG="$BASE_DIR/config/radarr/config.xml"
     PROWLARR_CONFIG="$BASE_DIR/config/prowlarr/config.xml"
     QBIT_CONFIG="$BASE_DIR/config/qbittorrent/qBittorrent/qBittorrent.conf"
-
     SONARR_URL="http://localhost:{{ sonarr_port }}"
     RADARR_URL="http://localhost:{{ radarr_port }}"
     PROWLARR_URL="http://localhost:{{ prowlarr_port }}"
@@ -151,18 +149,42 @@ _setup sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv":
     fi
 
     # Ask for qbit username and password
-    QBIT_USER=$(gum input --placeholder "admin" --prompt "qBittorrent username: " --value "admin")
-    QBIT_PASS=$(gum input --password --placeholder "Password" --prompt "qBittorrent password: ")
+    EXISTING_QBIT_USER=$(yq -p ini -o yaml '.Preferences.WebUI\Username' "$QBIT_CONFIG")
+
+    if [ -n "$EXISTING_QBIT_USER" ] && [ "$EXISTING_QBIT_USER" != "null" ]; then
+        DEFAULT_QBIT_USER="$EXISTING_QBIT_USER"
+    else
+        DEFAULT_QBIT_USER="admin"
+    fi
+
+    QBIT_USER=$(gum input --placeholder "admin" --prompt "qBittorrent username: " --value "$DEFAULT_QBIT_USER")
+
+    EXISTING_QBIT_PASS_HASH=$(yq -p ini -o yaml '.Preferences.WebUI\Password_PBKDF2' "$QBIT_CONFIG")
+    if [ -n "$EXISTING_QBIT_PASS_HASH" ] && [ "$EXISTING_QBIT_PASS_HASH" != "null" ]; then
+        DEFAULT_QBIT_PASS="(unchanged)"
+    else
+        DEFAULT_QBIT_PASS=""
+    fi
+
+    QBIT_PASS=$(gum input --password --placeholder "Password" --prompt "qBittorrent password: " --value "$DEFAULT_QBIT_PASS")
 
     gum style --foreground 212 "Updating qBittorrent credentials..."
     gum style --foreground 212 " shutting down qBittorrent..."
+
     systemctl --user stop qbittorrent
+
     # Update qBittorrent config with new username and password
-    hashed_pass=$(/usr/share/hoth-os/apps/arr-stack/qbit_pass.py generate "$QBIT_PASS")
-    sudo yq ".Preferences.WebUI\\Username = \"$QBIT_USER\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
-    sudo yq ".Preferences.WebUI\\Password_PBKDF2=\"@ByteArray($hashed_pass)\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
-    sudo yq ".BitTorrent.Session\\DefaultSavePath = \"/data/downloads\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
-    sudo yq ".BitTorrent.Session\\TempPath = \"/data/downloads/incomplete\"" -i -p ini /srv/config/qbittorrent/qBittorrent/qBittorrent.conf -o ini
+
+    sudo yq ".Preferences.WebUI\\Username = \"$QBIT_USER\"" -i -p ini $QBIT_CONFIG -o ini
+    if [ "$QBIT_PASS" == "(unchanged)" ]; then
+        gum style --foreground 212 "✓ qBittorrent password unchanged"
+        hashed_pass=$(/usr/share/hoth-os/apps/arr-stack/qbit_pass.py generate "$QBIT_PASS")
+        sudo yq ".Preferences.WebUI\\Password_PBKDF2=\"@ByteArray($hashed_pass)\"" -i -p ini $QBIT_CONFIG -o ini
+    fi
+
+    # Set download paths
+    sudo yq ".BitTorrent.Session\\DefaultSavePath = \"/data/downloads\"" -i -p ini $QBIT_CONFIG -o ini
+    sudo yq ".BitTorrent.Session\\TempPath = \"/data/downloads/incomplete\"" -i -p ini $QBIT_CONFIG -o ini
     gum style --foreground 212 " starting qBittorrent..."
     systemctl --user start qbittorrent
     gum style --foreground 212 "✓ qBittorrent credentials updated"

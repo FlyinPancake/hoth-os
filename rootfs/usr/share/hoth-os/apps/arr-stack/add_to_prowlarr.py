@@ -109,6 +109,18 @@ def add_app_to_prowlarr(
     arr_url = _normalize_base_url(arr_url)
     headers = _headers(prowlarr_api_key)
 
+    # 0) Check if an application with the same URL already exists
+    existing_apps_url = urljoin(prowlarr_url + "/", "api/v1/applications")
+    existing_apps = _get_json(existing_apps_url, headers, verify_tls)
+    for app in existing_apps or []:
+        fields = app.get("fields", []) or []
+        base_url_field = _find_field(fields, "baseUrl")
+        if base_url_field and base_url_field.get("value") == arr_url:
+            print(
+                "An application with the same URL and API key already exists in Prowlarr."
+            )
+            return app  # Return existing app without creating a duplicate
+
     # 1) Discover available application schemas
     schema_url = urljoin(prowlarr_url + "/", "api/v1/applications/schema")
     schemas = _get_json(schema_url, headers, verify_tls)

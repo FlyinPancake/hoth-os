@@ -46,6 +46,13 @@ def _post_json(url: str, headers: dict, payload: dict, verify: bool) -> dict:
     return r.json()
 
 
+def _get_json(url: str, headers: dict, verify: bool) -> list | dict:
+    r = requests.get(url, headers=headers, timeout=15, verify=verify)
+    if r.status_code >= 400:
+        raise RuntimeError(f"GET {url} failed: {r.status_code} {r.text}")
+    return r.json()
+
+
 def _normalize_base_url(u: str) -> str:
     # Ensure no trailing slash for baseUrl fields
     return u.rstrip("/")
@@ -60,6 +67,13 @@ def setup_sonarr_root_folder(
     """Setup root folder for TV shows in Sonarr."""
     sonarr_url = _normalize_base_url(sonarr_url)
     headers = _headers(sonarr_api_key)
+
+    existing = _get_json(
+        urljoin(sonarr_url + "/", "api/v3/rootfolder"), headers, verify_tls
+    )
+    for folder in existing:
+        if folder.get("path") == root_path.rstrip("/"):
+            return folder
 
     payload = {
         "path": root_path,
@@ -82,6 +96,13 @@ def setup_radarr_root_folder(
     """Setup root folder for movies in Radarr."""
     radarr_url = _normalize_base_url(radarr_url)
     headers = _headers(radarr_api_key)
+
+    existing = _get_json(
+        urljoin(radarr_url + "/", "api/v3/rootfolder"), headers, verify_tls
+    )
+    for folder in existing:
+        if folder.get("path") == root_path.rstrip("/"):
+            return folder
 
     payload = {
         "path": root_path,
@@ -149,7 +170,7 @@ def main():
                 root_path=args.tv_path,
                 verify_tls=verify_tls,
             )
-            print(f"✓ TV root folder added to Sonarr: {args.tv_path}")
+            print(f"✓ TV root folder added to Sonarr: {created.get('path')}")
             success_count += 1
         except Exception as e:
             print(f"Error adding TV root folder to Sonarr: {e}", file=sys.stderr)
@@ -164,7 +185,7 @@ def main():
                 root_path=args.movies_path,
                 verify_tls=verify_tls,
             )
-            print(f"✓ Movies root folder added to Radarr: {args.movies_path}")
+            print(f"✓ Movies root folder added to Radarr: {created.get('path')}")
             success_count += 1
         except Exception as e:
             print(f"Error adding Movies root folder to Radarr: {e}", file=sys.stderr)

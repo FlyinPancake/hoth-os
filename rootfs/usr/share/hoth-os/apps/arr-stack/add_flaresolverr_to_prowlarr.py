@@ -73,6 +73,13 @@ def add_flaresolverr_to_prowlarr(
     flaresolverr_url = _normalize_base_url(flaresolverr_url)
     headers = _headers(prowlarr_api_key)
 
+    # 0) Check if FlareSolverr proxy already exists
+    existing = _get_json(
+        urljoin(prowlarr_url + "/", "api/v1/indexerproxy"), headers, verify_tls
+    )
+    if any(proxy.get("name") == name for proxy in existing or []):
+        return {}
+
     # 1) Discover available indexer proxy schemas
     schema_url = urljoin(prowlarr_url + "/", "api/v1/indexerproxy/schema")
     schemas = _get_json(schema_url, headers, verify_tls)
