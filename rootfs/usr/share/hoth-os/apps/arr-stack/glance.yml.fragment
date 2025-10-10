@@ -1,16 +1,2 @@
-- type: monitor
-  title: Media Management
-  cache: 1m
-  sites:
-    - title: Sonarr
-      url: http://$HOSTNAME:$__SONARR_PORT__
-      icon: si:sonarr
-    - title: Radarr
-      url: http://$HOSTNAME:$__RADARR_PORT__
-      icon: si:radarr
-    - title: Prowlarr
-      url: http://$HOSTNAME:$__PROWLARR_PORT__
-      icon: si:prowlarr
-    - title: qBittorrent
-      url: http://$HOSTNAME:$__QBIT_PORT__
-      icon: si:qbittorrent
+- ${DOLLAR}include: arr-stack/monitors.yml
+- ${DOLLAR}include: arr-stack/prowlarr.yml

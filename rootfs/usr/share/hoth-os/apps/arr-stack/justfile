@@ -315,11 +315,24 @@ configure-glance sonarr_port radarr_port prowlarr_port qbit_port base_dir="/srv"
     gum style --border rounded --padding "1 2" --border-foreground 212 "Add Arr Stack to Glance"
     echo
 
+    mkdir -p /srv/config/glance/arr-stack
+
     export HOSTNAME=$(hostname)
-    export __SONARR_PORT__="{{ sonarr_port }}"
-    export __RADARR_PORT__="{{ radarr_port }}"
-    export __PROWLARR_PORT__="{{ prowlarr_port }}"
-    export __QBIT_PORT__="{{ qbit_port }}"
+    export SONARR_PORT="{{ sonarr_port }}"
+    export RADARR_PORT="{{ radarr_port }}"
+    export PROWLARR_PORT="{{ prowlarr_port }}"
+    export QBIT_PORT="{{ qbit_port }}"
+
+    envsubst < /usr/share/hoth-os/apps/arr-stack/glance/monitors.yml > /srv/config/glance/arr-stack/monitors.yml
+
+    export PROWLARR_API_URL="http://host.containers.internal:{{ prowlarr_port }}"
+    export PROWLARR_URL="http://$(hostname):{{ prowlarr_port }}"
+    export PROWLARR_KEY=$(yq .Config.ApiKey /srv/config/prowlarr/config.xml)
+    export PROWLARR_COLLAPSE_AFTER="3" # number of days to collapse
+
+    envsubst '${PROWLARR_URL},${PROWLARR_API_URL},${PROWLARR_KEY},${PROWLARR_COLLAPSE_AFTER}' \
+        < /usr/share/hoth-os/apps/arr-stack/glance/prowlarr.yml \
+        > /srv/config/glance/arr-stack/prowlarr.yml
 
     just --justfile /usr/share/hoth-os/apps/glance/justfile add-service arr-stack
 

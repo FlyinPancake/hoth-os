@@ -8,8 +8,8 @@ default:
 syncthing *args:
     @just --justfile {{ apps_dir }}/syncthing/justfile {{ args }}
 
-homepage *args:
-    @just --justfile {{ apps_dir }}/homepage/justfile {{ args }}
+glance *args:
+    @just --justfile {{ apps_dir }}/glance/justfile {{ args }}
 
 arr-stack *args:
     @just --justfile {{ apps_dir }}/arr-stack/justfile {{ args }}
@@ -20,13 +20,13 @@ btrfs-setup:
 btrfs-snapshot action="" schedule="":
     #!/usr/bin/env bash
     set -Eeuo pipefail
-    
+
     if [ -z "{{ action }}" ]; then
         ACTION=$(gum choose "enable" "disable" "run-now" "status" --header "Manage btrfs snapshots")
     else
         ACTION="{{ action }}"
     fi
-    
+
     case $ACTION in
         enable)
             if [ -z "{{ schedule }}" ]; then
@@ -35,14 +35,14 @@ btrfs-snapshot action="" schedule="":
                 SCHEDULE="{{ schedule }}"
             fi
             echo "Schedule: $SCHEDULE"
-            
+
             sudo cp /usr/lib/systemd/system/btrfs-snapshot.timer /etc/systemd/system/btrfs-snapshot.timer
             sudo sed -i "s/OnCalendar=daily/OnCalendar=$SCHEDULE/" /etc/systemd/system/btrfs-snapshot.timer
-            
+
             sudo systemctl daemon-reload
             sudo systemctl enable btrfs-snapshot.timer
             sudo systemctl start btrfs-snapshot.timer
-            
+
             gum style --foreground 212 "✓ Btrfs snapshots enabled ($SCHEDULE)"
             gum style --faint "View status: hjust btrfs-snapshot status"
             ;;

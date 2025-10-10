@@ -1,6 +1,6 @@
 set shell := ["bash", "-Eeuo", "pipefail", "-c"]
 
-quadlets_src_dir = "/usr/share/hoth-os/apps/glance/quadlets"
+quadlets_src_dir := "/usr/share/hoth-os/apps/glance/quadlets"
 
 install:
     #!/usr/bin/env bash
@@ -52,7 +52,7 @@ install:
 
     echo "Starting service..."
     systemctl --user daemon-reload
-    systemctl --user start glance.service
+    systemctl --user start glance-pod.service
     echo
 
     gum style --foreground 212 "✓ Glance installed successfully!"
@@ -101,6 +101,7 @@ add-service app_name:
     fi
 
     TEMP=$(mktemp)
+    export DOLLAR='$'
     envsubst < "$FRAGMENT" > "$TEMP"
 
     yq eval -i '.pages[0].columns[1].widgets += load("'$TEMP'")' "$CONFIG"

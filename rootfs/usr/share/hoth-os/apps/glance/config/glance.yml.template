@@ -1,4 +1,3 @@
-theme: dark
 branding:
   title: Hoth Dashboard
 
@@ -13,6 +12,8 @@ pages:
             sites:
               - title: Cockpit
                 url: http://__HOSTNAME__:9090
+                check-url: http://host.containers.internal:9090
+                allow-insecure: true
                 icon: si:cockpit
 
       - size: full

@@ -1,0 +1,16 @@
+- type: monitor
+  title: Media Management
+  cache: 1m
+  sites:
+    - title: Sonarr
+      url: http://$HOSTNAME:$SONARR_PORT
+      icon: si:sonarr
+    - title: Radarr
+      url: http://$HOSTNAME:$RADARR_PORT
+      icon: si:radarr
+    - title: Prowlarr
+      url: http://$HOSTNAME:$PROWLARR_PORT
+      icon: https://cdn.jsdelivr.net/gh/selfhst/icons/svg/prowlarr.svg
+    - title: qBittorrent
+      url: http://$HOSTNAME:$QBIT_PORT
+      icon: si:qbittorrent
