@@ -1,0 +1,13 @@
+[Unit]
+Description=Jellyfin Media Server Pod
+After=network-online.target
+
+[Pod]
+PodmanArgs=--infra-name=jellyfin-infra
+PublishPort=8096:8096
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

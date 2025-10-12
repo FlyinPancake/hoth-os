@@ -12,6 +12,7 @@
 | 9696 | Prowlarr | User-installed | Indexer manager (configurable during install) |
 | 8080 | qBittorrent | User-installed | Torrent client web UI (configurable during install) |
 | 6881 | qBittorrent | User-installed | TCP/UDP torrent traffic (configurable during install) |
+| 8096 | Jellyfin | User-installed | Media server web UI (configurable during install) |
 
 ## Reserved Ports
 - 9090: Cockpit (always enabled)

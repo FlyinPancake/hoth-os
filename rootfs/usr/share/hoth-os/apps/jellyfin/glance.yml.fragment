@@ -1,0 +1,7 @@
+- type: monitor
+  title: Jellyfin
+  cache: 1m
+  sites:
+    - title: Media Server
+      url: http://$HOSTNAME:$__PORT__
+      icon: si:jellyfin

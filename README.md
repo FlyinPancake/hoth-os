@@ -30,8 +30,9 @@ See [BTRFS.md](BTRFS.md) for details.
 #### Available Apps
 
 - **syncthing** - File synchronization
-- **homepage** - Dashboard for all your services
+- **glance** - Dashboard for all your services
 - **arr-stack** - Media management (Sonarr, Radarr, Prowlarr, qBittorrent in a pod)
+- **jellyfin** - Media streaming server
 
 #### Commands
 

@@ -1,0 +1,19 @@
+[Unit]
+Description=Jellyfin Media Server
+After=jellyfin.pod
+
+[Container]
+Image=docker.io/jellyfin/jellyfin:latest
+Pod=jellyfin.pod
+Volume=/srv/config/jellyfin:/config
+Volume=/srv/data/jellyfin:/data
+Volume=/srv/data/movies:/movies:ro
+Volume=/srv/data/tv:/tv:ro
+Environment=JELLYFIN_PublishedServerUrl=http://__HOSTNAME__:__PORT__
+PodmanArgs=--group-add=keep-groups
+
+[Service]
+Restart=always
+
+[Install]
+WantedBy=default.target

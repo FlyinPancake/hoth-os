@@ -55,6 +55,14 @@ See [BTRFS.md](BTRFS.md) for setup instructions.
 | `/srv/config/glance/` | Glance configuration | @config |
 | `/srv/config/glance/glance.yml` | Main config file | @config |
 
+### Jellyfin
+| Path | Purpose | Subvolume |
+|------|---------|-----------|
+| `/srv/config/jellyfin/` | Jellyfin config and database | @config |
+| `/srv/data/jellyfin/` | Jellyfin metadata and cache | @data |
+| `/srv/data/movies/` | Movie library (shared with Radarr) | @data |
+| `/srv/data/tv/` | TV series library (shared with Sonarr) | @data |
+
 ## App Configuration Templates
 
 | Path | Purpose |
