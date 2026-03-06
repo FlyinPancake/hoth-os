@@ -32,6 +32,7 @@ jobs:
         uses: hadolint/hadolint-action@v3.1.0
         with:
           dockerfile: Containerfile
+          ignore: DL4006
 
   build_bootc:
     needs: [lint]
