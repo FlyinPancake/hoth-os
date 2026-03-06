@@ -1,14 +1,12 @@
 FROM quay.io/almalinuxorg/almalinux-bootc-rpi:10
 
-SHELL ["/bin/bash", "-o", "pipefail", "-c"]
-
 # Install and configure repositories, packages, then clean up in one layer
 # hadolint ignore=DL3041
 RUN dnf -y install dnf-plugins-core && \
     dnf config-manager --set-enabled crb && \
     dnf -y install epel-release && \
     dnf config-manager --add-repo https://pkgs.tailscale.com/stable/fedora/tailscale.repo && \
-    dnf config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo && \
+    dnf config-manager --add-repo https://download.docker.com/linux/rhel/docker-ce.repo && \
     dnf -y copr enable tkbcopr/fd && \
     dnf -y install \
     vim fish cockpit cockpit-ostree cockpit-files cockpit-podman neovim tailscale ripgrep fd btop just gum yq fzf btrfs-progs rsync samba samba-common \
@@ -19,7 +17,8 @@ RUN dnf -y install dnf-plugins-core && \
     dnf -y update && \
     dnf clean all && rm -rf /var/cache/dnf && \
     systemctl enable tailscaled && \
-    curl -sS https://starship.rs/install.sh | sh -s -- -y
+    curl -sS https://starship.rs/install.sh | sh -s -- -y && \
+    echo "built $(date)" > /usr/share/built.txt
 
 COPY rootfs/ /
 
