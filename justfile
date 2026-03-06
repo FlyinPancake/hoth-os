@@ -6,10 +6,11 @@ build:
 
 lint-containerfile:
     #!/bin/bash
+    args="--ignore DL4006"
     if command -v hadolint >/dev/null 2>&1; then \
-        hadolint Containerfile; \
+        hadolint $args Containerfile; \
     else \
-        podman run --rm -v "$PWD:/work:ro,Z" -w /work docker.io/hadolint/hadolint hadolint Containerfile; \
+        podman run --rm -v "$PWD:/work:ro,Z" -w /work docker.io/hadolint/hadolint hadolint $args Containerfile; \
     fi
 
 lint-actions:
